@@ -1,239 +1,242 @@
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdio.h>
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include <X11/Xos.h>
-#include <dlfcn.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>  // usleep
-#include <time.h>
-#include <limits.h>
 
+#define MAX_INTERNAL_MEMORY_SIZE (1 * 1024 * 1024)  // 1 Mb
 
-global bool GlobalRunning;
+#define COUNT_OF(x) \
+  ((sizeof(x) / sizeof(0 [x])) / ((size_t)(!(sizeof(x) % sizeof(0 [x])))))
 
-global game_memory GameMemory;
-global game_offscreen_buffer GameBackBuffer;
-global platform_sound_output gSoundOutput;
-global XImage *gXImage;
+typedef enum Input_Button {
+  IB_up = 0,
+  IB_down,
+  IB_left,
+  IB_right,
 
+  IB_space,
+  IB_shift,
+  IB_escape,
 
-int main(int argc, char const *argv[]) {
+  IB__COUNT,
+} Input_Button;
+
+typedef struct User_Input {
+  bool buttons[IB__COUNT];
+  bool key_pressed;
+
+  struct User_Input *old;
+} User_Input;
+
+bool button_is_down(User_Input *input, Input_Button button);
+bool button_was_down(User_Input *input, Input_Button button);
+bool button_went_down(User_Input *input, Input_Button button);
+bool button_went_up(User_Input *input, Input_Button button);
+
+typedef struct Pixel_Buffer {
+  int width;
+  int height;
+  int max_width;
+  int max_height;
+
+  void *memory;
+
+  // void draw_pixel(v2i, u32, bool);
+} Pixel_Buffer;
+
+typedef struct Program_Memory {
+  void *start;
+  void *free_memory;
+  size_t allocated;
+} Program_Memory;
+
+typedef struct Program_State {
+  int kWindowWidth;
+  int kWindowHeight;
+} Program_State;
+
+// Globals
+bool g_running = true;
+Pixel_Buffer g_pixel_buffer;
+Program_Memory g_program_memory;
+XImage *g_ximage;
+
+void update_and_render(Program_Memory *memory, Program_State *state,
+                       User_Input *input) {}
+
+int main(int argc, char *argv[]) {
+  // Allocate main memory
+  g_program_memory.start = malloc(MAX_INTERNAL_MEMORY_SIZE);
+  g_program_memory.free_memory = g_program_memory.start;
+
+  // Main program state - note that window size is set there
+  Program_State *state = malloc(sizeof(Program_State));
+  state->kWindowWidth = 640;
+  state->kWindowHeight = 480;
+
+  // TODO: init pixel buffer
 
   Display *display;
   Window window;
-  int screen;
 
-  display = XOpenDisplay(0);
-  if (display == 0) {
-    fprintf(stderr, "Cannot open display\n");
-    return 1;
+  // Open display
+  display = XOpenDisplay(NULL);
+  if (!display) {
+    fprintf(stderr, "Failed to open X display\n");
+    exit(1);
   }
 
-  screen = DefaultScreen(display);
-
-  u32 border_color = WhitePixel(display, screen);
-  u32 bg_color = BlackPixel(display, screen);
-
-  const int kWindowWidth = 1500;
-  const int kWindowHeight = 1000;
+  int screen = DefaultScreen(display);
 
   window = XCreateSimpleWindow(display, RootWindow(display, screen), 300, 300,
-                               kWindowWidth, kWindowHeight, 0, border_color,
-                               bg_color);
+                               state->kWindowWidth, state->kWindowHeight, 0,
+                               WhitePixel(display, screen),
+                               BlackPixel(display, screen));
 
-  XSetStandardProperties(display, window, "My Window", "Hi!", None, NULL, 0,
-                         NULL);
+  XSetStandardProperties(display, window, "Editor", "Hi!", None, NULL, 0, NULL);
 
-  XSelectInput(display, window,
-               ExposureMask | KeyPressMask | KeyReleaseMask | ButtonPressMask);
+  XSelectInput(display, window, ExposureMask | KeyPressMask | KeyReleaseMask |
+                                    ButtonPressMask | StructureNotifyMask);
   XMapRaised(display, window);
 
-  Atom wmDeleteMessage = XInternAtom(display, "WM_DELETE_WINDOW", False);
-  XSetWMProtocols(display, window, &wmDeleteMessage, 1);
-
-  usleep(5000);  // 50 ms
-
-
-  // Init backbuffer
-  GameBackBuffer.MaxWidth = 2000;
-  GameBackBuffer.MaxHeight = 1500;
-  GameBackBuffer.BytesPerPixel = 4;
-
-  // @tmp
-  GameBackBuffer.Width = kWindowWidth;
-  GameBackBuffer.Height = kWindowHeight;
-
-  int BufferSize = GameBackBuffer.MaxWidth * GameBackBuffer.MaxHeight *
-                   GameBackBuffer.BytesPerPixel;
-
-  GameBackBuffer.Memory = malloc(BufferSize);
-
-  Pixmap pixmap;
   GC gc;
   XGCValues gcvalues;
 
   // Create x image
   {
-    // int depth = 32;
-    // int bitmap_pad = 32;
-    // int bytes_per_line = 0;
-    // int offset = 0;
+    for (;;) {
+      XEvent e;
+      XNextEvent(display, &e);
+      if (e.type == MapNotify) break;
+    }
 
-    // gXImage = XCreateImage(display, CopyFromParent, depth, ZPixmap, offset,
-    //                        (char *)GameBackBuffer.Memory, kWindowWidth,
-    //                        kWindowHeight, bitmap_pad, bytes_per_line);
+    g_ximage = XGetImage(display, window, 0, 0, state->kWindowWidth,
+                         state->kWindowHeight, AllPlanes, ZPixmap);
 
-    // TODO: find a way to do it with a newly created image
-    usleep(500000);
-    gXImage = XGetImage(display, window, 0, 0, kWindowWidth, kWindowHeight,
-                        AllPlanes, ZPixmap);
+    free(g_pixel_buffer.memory);
+    g_pixel_buffer.memory = (void *)g_ximage->data;
+    g_pixel_buffer.width = state->kWindowWidth;
+    g_pixel_buffer.height = state->kWindowHeight;
 
-    GameBackBuffer.Memory = (void *)gXImage->data;
-
-    // u32 *Pixel = (u32 *)gXImage->data;
-    // for (int i = 0; i < kWindowWidth * 700; i++) {
-    //   *Pixel = 0x00FF00FF;
-    //   Pixel++;
-    // }
-
-    // pixmap = XCreatePixmap(display, window, kWindowWidth,
-    //                        kWindowHeight, depth);
     gc = XCreateGC(display, window, 0, &gcvalues);
   }
 
-  // Get space for inputs
-  game_input Input[2];
-  game_input *OldInput = &Input[0];
-  game_input *NewInput = &Input[1];
-  *NewInput = {};
+  Atom wmDeleteMessage = XInternAtom(display, "WM_DELETE_WINDOW", False);
+  XSetWMProtocols(display, window, &wmDeleteMessage, 1);
 
-  // TODO: query monitor refresh rate
-  int target_fps = 60;
-  r32 target_nspf = 1.0e9f / (r32)target_fps;  // Target ms per frame
+  User_Input inputs[2];
+  User_Input *old_input = &inputs[0];
+  User_Input *new_input = &inputs[1];
+  *new_input = (const User_Input){0};
 
-  GlobalRunning = true;
+  // Main loop
+  g_running = true;
 
-  u64 last_timestamp = LinuxGetWallClock();
-
-  while (GlobalRunning) {
+  while (g_running) {
     // Process events
     while (XPending(display)) {
       XEvent event;
-      KeySym key;
-      char buf[256];
-      player_input *Player1 = &NewInput->Player1;
-      player_input *Player2 = &NewInput->Player2;
-      char symbol = 0;
-      bool32 pressed = false;
-      bool32 released = false;
-      bool32 retriggered = false;
-
       XNextEvent(display, &event);
 
-      if (XLookupString(&event.xkey, buf, 255, &key, 0) == 1) {
-        symbol = buf[0];
-      }
+      if (event.type == KeyPress || event.type == KeyRelease) {
+        KeySym key;
+        char buf[256];
+        char symbol = 0;
+        bool pressed = false;
+        bool released = false;
+        bool retriggered = false;
 
-      // Process user input
-      if (event.type == KeyPress) {
-        printf("Key pressed\n");
-        pressed = true;
-      }
+        if (XLookupString(&event.xkey, buf, 255, &key, 0) == 1) {
+          symbol = buf[0];
+        }
 
-      if (event.type == KeyRelease) {
-        if (XEventsQueued(display, QueuedAfterReading)) {
-          XEvent nev;
-          XPeekEvent(display, &nev);
+        // Process user input
+        if (event.type == KeyPress) {
+          pressed = true;
+        }
 
-          if (nev.type == KeyPress && nev.xkey.time == event.xkey.time &&
-              nev.xkey.keycode == event.xkey.keycode) {
-            // Ignore. Key wasn't actually released
-            printf("Key release ignored\n");
-            XNextEvent(display, &event);
-            retriggered = true;
+        if (event.type == KeyRelease) {
+          if (XEventsQueued(display, QueuedAfterReading)) {
+            XEvent nev;
+            XPeekEvent(display, &nev);
+
+            if (nev.type == KeyPress && nev.xkey.time == event.xkey.time &&
+                nev.xkey.keycode == event.xkey.keycode) {
+              // Ignore. Key wasn't actually released
+              XNextEvent(display, &event);
+              retriggered = true;
+            }
+          }
+
+          if (!retriggered) {
+            released = true;
           }
         }
 
-        if (!retriggered) {
-          printf("Key released\n");
-          released = true;
-        }
-      }
-
-      if (pressed || released) {
-        if (key == XK_Escape) {
-          Player1->Menu.EndedDown = pressed;
-        } else if (key == XK_Left) {
-          Player1->Left.EndedDown = pressed;
-        } else if (key == XK_Right) {
-          Player1->Right.EndedDown = pressed;
-        } else if (key == XK_Up) {
-          Player1->Up.EndedDown = pressed;
-        } else if (key == XK_Down) {
-          Player1->Down.EndedDown = pressed;
-        } else if (key == XK_space) {
-          Player1->Fire.EndedDown = pressed;
-        } else if (symbol == 'x') {
-          Player1->Turbo.EndedDown = pressed;
+        if (pressed || released) {
+          if (key == XK_Escape) {
+            new_input->buttons[IB_escape] = pressed;
+          }
+          if (key == XK_Up) {
+            new_input->buttons[IB_up] = pressed;
+          }
+          if (key == XK_Down) {
+            new_input->buttons[IB_down] = pressed;
+          }
+          if (key == XK_Left) {
+            new_input->buttons[IB_left] = pressed;
+          }
+          if (key == XK_Right) {
+            new_input->buttons[IB_right] = pressed;
+          }
+          if (key == XK_Shift_L || key == XK_Shift_R) {
+            new_input->buttons[IB_shift] = pressed;
+          }
+          if (('a' <= symbol && symbol <= 'z') ||
+              ('A' <= symbol && symbol <= 'Z') ||
+              ('0' <= symbol && symbol <= '9')) {
+            // Convert small letters to capitals
+            if ('a' <= symbol && symbol <= 'z') {
+              symbol += ('A' - 'a');
+            }
+            // new_input->buttons[IB_key] = pressed;
+            // new_input->symbol = symbol;
+          }
         }
       }
 
       // Close window message
       if (event.type == ClientMessage) {
-        if (event.xclient.data.l[0] == wmDeleteMessage) {
-          GlobalRunning = false;
+        if ((unsigned)event.xclient.data.l[0] == wmDeleteMessage) {
+          g_running = false;
         }
       }
     }
 
-    bool32 RedrawLevel = false;
+    update_and_render(&g_program_memory, state, new_input);
 
-    Game.UpdateAndRender(NewInput, &GameBackBuffer, &GameMemory, &gSoundOutput,
-                         RedrawLevel);
+    XPutImage(display, window, gc, g_ximage, 0, 0, 0, 0, state->kWindowWidth,
+              state->kWindowHeight);
 
     // Swap inputs
-    game_input *TmpInput = OldInput;
-    OldInput = NewInput;
-    NewInput = TmpInput;
-    *NewInput = {};  // zero everything
+    struct User_Input *tmp = old_input;
+    old_input = new_input;
+    new_input = tmp;
 
-    // Retain the EndedDown state
-    for (int p = 0; p < COUNT_OF(NewInput->Players); p++) {
-      player_input *OldPlayerInput = &OldInput->Players[p];
-      player_input *NewPlayerInput = &NewInput->Players[p];
-      for (int b = 0; b < COUNT_OF(OldPlayerInput->Buttons); b++) {
-        NewPlayerInput->Buttons[b].EndedDown =
-            OldPlayerInput->Buttons[b].EndedDown;
-      }
-    }
+    // Zero input
+    *new_input = (const User_Input){0};
+    new_input->old = old_input;  // Save so we can refer to it later
 
-    XPutImage(display, window, gc, gXImage, 0, 0, 0, 0, kWindowWidth,
-              kWindowHeight);
-
-    // Limit FPS
-    {
-      u64 current_timestamp = LinuxGetWallClock();
-      u64 ns_elapsed = LinuxGetWallClock() - last_timestamp;
-
-      if (ns_elapsed < target_nspf) {
-        timespec ts;
-        ts.tv_sec = 0;
-        ts.tv_nsec = target_nspf - ns_elapsed;  // time to sleep
-        clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, NULL);
-
-        while (ns_elapsed < target_nspf) {
-          ns_elapsed = LinuxGetWallClock() - last_timestamp;
-        }
-      } else {
-        printf("Frame missed\n");
-      }
-
-      last_timestamp = LinuxGetWallClock();
+    // Retain the button state
+    for (size_t i = 0; i < COUNT_OF(new_input->buttons); i++) {
+      new_input->buttons[i] = old_input->buttons[i];
     }
   }
 
+  XDestroyWindow(display, window);
   XCloseDisplay(display);
 
-  return 0;
+  exit(0);
 }
