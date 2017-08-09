@@ -35,51 +35,22 @@ bool button_was_down(User_Input *input, Input_Button button);
 bool button_went_down(User_Input *input, Input_Button button);
 bool button_went_up(User_Input *input, Input_Button button);
 
-typedef struct Pixel_Buffer {
-  int width;
-  int height;
-  int max_width;
-  int max_height;
-
-  void *memory;
-
-  // void draw_pixel(v2i, u32, bool);
-} Pixel_Buffer;
-
-typedef struct Program_Memory {
-  void *start;
-  void *free_memory;
-  size_t allocated;
-} Program_Memory;
-
-typedef struct Program_State {
-  int kWindowWidth;
-  int kWindowHeight;
-} Program_State;
-
 // Globals
 bool g_running = true;
-Pixel_Buffer g_pixel_buffer;
-Program_Memory g_program_memory;
 XImage *g_ximage;
 
-void update_and_render(Program_Memory *memory, Program_State *state,
-                       User_Input *input) {}
+void draw_rect();
+
+bool update_and_render(void *pixels, int width, int height, User_Input *input) {
+  return true;
+}
 
 int main(int argc, char *argv[]) {
-  // Allocate main memory
-  g_program_memory.start = malloc(MAX_INTERNAL_MEMORY_SIZE);
-  g_program_memory.free_memory = g_program_memory.start;
-
-  // Main program state - note that window size is set there
-  Program_State *state = malloc(sizeof(Program_State));
-  state->kWindowWidth = 640;
-  state->kWindowHeight = 480;
-
-  // TODO: init pixel buffer
-
   Display *display;
   Window window;
+
+  const int kWindowWidth = 640;
+  const int kWindowHeight = 480;
 
   // Open display
   display = XOpenDisplay(NULL);
@@ -91,12 +62,10 @@ int main(int argc, char *argv[]) {
   int screen = DefaultScreen(display);
 
   window = XCreateSimpleWindow(display, RootWindow(display, screen), 300, 300,
-                               state->kWindowWidth, state->kWindowHeight, 0,
+                               kWindowWidth, kWindowHeight, 0,
                                WhitePixel(display, screen),
                                BlackPixel(display, screen));
-
   XSetStandardProperties(display, window, "Editor", "Hi!", None, NULL, 0, NULL);
-
   XSelectInput(display, window, ExposureMask | KeyPressMask | KeyReleaseMask |
                                     ButtonPressMask | StructureNotifyMask);
   XMapRaised(display, window);
@@ -109,17 +78,10 @@ int main(int argc, char *argv[]) {
     for (;;) {
       XEvent e;
       XNextEvent(display, &e);
-      if (e.type == MapNotify) break;
+      if (e.type == MapNotify) break;  // wait for map notify event
     }
-
-    g_ximage = XGetImage(display, window, 0, 0, state->kWindowWidth,
-                         state->kWindowHeight, AllPlanes, ZPixmap);
-
-    free(g_pixel_buffer.memory);
-    g_pixel_buffer.memory = (void *)g_ximage->data;
-    g_pixel_buffer.width = state->kWindowWidth;
-    g_pixel_buffer.height = state->kWindowHeight;
-
+    g_ximage = XGetImage(display, window, 0, 0, kWindowWidth,
+                         kWindowHeight, AllPlanes, ZPixmap);
     gc = XCreateGC(display, window, 0, &gcvalues);
   }
 
@@ -215,10 +177,14 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    update_and_render(&g_program_memory, state, new_input);
+    bool result = update_and_render((void *)g_ximage->data, kWindowWidth,
+                                    kWindowHeight, new_input);
+    if (!result) {
+      g_running = false;
+    }
 
-    XPutImage(display, window, gc, g_ximage, 0, 0, 0, 0, state->kWindowWidth,
-              state->kWindowHeight);
+    XPutImage(display, window, gc, g_ximage, 0, 0, 0, 0, kWindowWidth,
+              kWindowHeight);
 
     // Swap inputs
     struct User_Input *tmp = old_input;
