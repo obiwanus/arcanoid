@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -9,6 +10,8 @@
 
 #define COUNT_OF(x) \
   ((sizeof(x) / sizeof(0 [x])) / ((size_t)(!(sizeof(x) % sizeof(0 [x])))))
+
+typedef uint32_t u32;
 
 typedef enum Input_Button {
   IB_up = 0,
@@ -30,6 +33,12 @@ typedef struct User_Input {
   struct User_Input *old;
 } User_Input;
 
+typedef struct Pixel_Buffer {
+  u32 *pixels;
+  int width;
+  int height;
+} Pixel_Buffer;
+
 bool button_is_down(User_Input *input, Input_Button button);
 bool button_was_down(User_Input *input, Input_Button button);
 bool button_went_down(User_Input *input, Input_Button button);
@@ -39,9 +48,23 @@ bool button_went_up(User_Input *input, Input_Button button);
 bool g_running = true;
 XImage *g_ximage;
 
-void draw_rect();
+void draw_rect(Pixel_Buffer *screen, int left, int top, int width, int height, u32 color) {
+  int right = left + width;
+  int bottom = top + height;
+  if (left < 0) left = 0;
+  if (top < 0) top = 0;
+  if (right > screen->width) right = screen->width;
+  if (bottom > screen->height) bottom = screen->height;
+  for (int y = top; y < bottom; ++y) {
+    u32 *pixel = screen->pixels + screen->width * y + left;
+    for (int x = left; x < right; ++x) {
+      *pixel++ = color;
+    }
+  }
+}
 
-bool update_and_render(void *pixels, int width, int height, User_Input *input) {
+bool update_and_render(Pixel_Buffer *screen, User_Input *input) {
+  draw_rect(screen, 100, 100, 100, 20, 0x00FFFFFF);
   return true;
 }
 
@@ -72,6 +95,7 @@ int main(int argc, char *argv[]) {
 
   GC gc;
   XGCValues gcvalues;
+  Pixel_Buffer pixel_buffer = {0};
 
   // Create x image
   {
@@ -82,6 +106,10 @@ int main(int argc, char *argv[]) {
     }
     g_ximage = XGetImage(display, window, 0, 0, kWindowWidth,
                          kWindowHeight, AllPlanes, ZPixmap);
+    pixel_buffer.pixels = (u32 *)g_ximage->data;
+    pixel_buffer.width = kWindowWidth;
+    pixel_buffer.height = kWindowHeight;
+
     gc = XCreateGC(display, window, 0, &gcvalues);
   }
 
@@ -177,8 +205,7 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    bool result = update_and_render((void *)g_ximage->data, kWindowWidth,
-                                    kWindowHeight, new_input);
+    bool result = update_and_render(&pixel_buffer, new_input);
     if (!result) {
       g_running = false;
     }
