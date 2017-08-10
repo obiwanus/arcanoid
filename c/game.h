@@ -3,6 +3,8 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 typedef uint32_t u32;
 
@@ -21,7 +23,6 @@ typedef enum Input_Button {
 
 typedef struct User_Input {
   bool buttons[IB__COUNT];
-  bool key_pressed;
 
   struct User_Input *old;
 } User_Input;

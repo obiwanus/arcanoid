@@ -1,6 +1,3 @@
-#include <stdlib.h>
-#include <stdio.h>
-
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
@@ -9,15 +6,9 @@
 #define COUNT_OF(x) \
   ((sizeof(x) / sizeof(0 [x])) / ((size_t)(!(sizeof(x) % sizeof(0 [x])))))
 
-bool button_is_down(User_Input *input, Input_Button button);
-bool button_was_down(User_Input *input, Input_Button button);
-bool button_went_down(User_Input *input, Input_Button button);
-bool button_went_up(User_Input *input, Input_Button button);
-
 // Globals
 bool g_running = true;
 XImage *g_ximage;
-
 
 int main(int argc, char *argv[]) {
   Display *display;
@@ -39,7 +30,8 @@ int main(int argc, char *argv[]) {
                                kWindowWidth, kWindowHeight, 0,
                                WhitePixel(display, screen),
                                BlackPixel(display, screen));
-  XSetStandardProperties(display, window, "Editor", "Hi!", None, NULL, 0, NULL);
+  XSetStandardProperties(display, window, "Arcanoid", "Hi!", None, NULL, 0,
+                         NULL);
   XSelectInput(display, window, ExposureMask | KeyPressMask | KeyReleaseMask |
                                     ButtonPressMask | StructureNotifyMask);
   XMapRaised(display, window);
@@ -55,8 +47,8 @@ int main(int argc, char *argv[]) {
       XNextEvent(display, &e);
       if (e.type == MapNotify) break;  // wait for map notify event
     }
-    g_ximage = XGetImage(display, window, 0, 0, kWindowWidth,
-                         kWindowHeight, AllPlanes, ZPixmap);
+    g_ximage = XGetImage(display, window, 0, 0, kWindowWidth, kWindowHeight,
+                         AllPlanes, ZPixmap);
     pixel_buffer.pixels = (u32 *)g_ximage->data;
     pixel_buffer.width = kWindowWidth;
     pixel_buffer.height = kWindowHeight;
