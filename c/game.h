@@ -7,6 +7,7 @@
 #include <stdio.h>
 
 typedef uint32_t u32;
+typedef uint64_t u64;
 
 typedef enum Input_Button {
   IB_up = 0,
@@ -33,6 +34,6 @@ typedef struct Pixel_Buffer {
   int height;
 } Pixel_Buffer;
 
-bool update_and_render(Pixel_Buffer *screen, User_Input *input);
+bool UpdateAndRender(Pixel_Buffer *screen, User_Input *input);
 
 #endif  // _GAME_H_

@@ -1,15 +1,15 @@
 #include "game.h"
 
-bool button_is_down(User_Input *input, Input_Button button) {
+bool ButtonIsDown(User_Input *input, Input_Button button) {
   return input->buttons[button];
 }
 
-bool button_was_down(User_Input *input, Input_Button button) {
+bool ButtonWasDown(User_Input *input, Input_Button button) {
   if (input->old == NULL) return false;
   return input->old->buttons[button];
 }
 
-void draw_rect(Pixel_Buffer *screen, int left, int top, int width, int height,
+void DrawRect(Pixel_Buffer *screen, int left, int top, int width, int height,
                u32 color) {
   int right = left + width;
   int bottom = top + height;
@@ -25,7 +25,7 @@ void draw_rect(Pixel_Buffer *screen, int left, int top, int width, int height,
   }
 }
 
-bool update_and_render(Pixel_Buffer *screen, User_Input *input) {
-  draw_rect(screen, 100, 100, 100, 20, 0x00FFFFFF);
+bool UpdateAndRender(Pixel_Buffer *screen, User_Input *input) {
+  DrawRect(screen, 100, 100, 100, 20, 0x00FFFFFF);
   return true;
 }

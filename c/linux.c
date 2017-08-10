@@ -1,6 +1,9 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
+#include <time.h>
+#include <unistd.h>
+
 #include "game.h"
 
 #define COUNT_OF(x) \
@@ -9,6 +12,16 @@
 // Globals
 bool g_running = true;
 XImage *g_ximage;
+
+u64 LinuxGetWallClock() {
+  u64 result = 0;
+  struct timespec spec;
+
+  clock_gettime(CLOCK_MONOTONIC, &spec);
+  result = spec.tv_nsec;  // ns
+
+  return result;
+}
 
 int main(int argc, char *argv[]) {
   Display *display;
@@ -66,6 +79,10 @@ int main(int argc, char *argv[]) {
 
   // Main loop
   g_running = true;
+
+  int target_fps = 60;
+  float target_nspf = 1.0e9f / (float)target_fps;  // Target ms per frame
+  u64 last_timestamp = LinuxGetWallClock();
 
   while (g_running) {
     // Process events
@@ -148,7 +165,7 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    bool result = update_and_render(&pixel_buffer, new_input);
+    bool result = UpdateAndRender(&pixel_buffer, new_input);
     if (!result) {
       g_running = false;
     }
@@ -168,6 +185,27 @@ int main(int argc, char *argv[]) {
     // Retain the button state
     for (size_t i = 0; i < COUNT_OF(new_input->buttons); i++) {
       new_input->buttons[i] = old_input->buttons[i];
+    }
+
+    // Limit FPS
+    {
+      u64 current_timestamp = LinuxGetWallClock();
+      u64 ns_elapsed = LinuxGetWallClock() - last_timestamp;
+
+      if (ns_elapsed < target_nspf) {
+        struct timespec ts;
+        ts.tv_sec = 0;
+        ts.tv_nsec = target_nspf - ns_elapsed;  // time to sleep
+        clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, NULL);
+
+        while (ns_elapsed < target_nspf) {
+          ns_elapsed = LinuxGetWallClock() - last_timestamp;
+        }
+      } else {
+        printf("Frame missed\n");
+      }
+
+      last_timestamp = LinuxGetWallClock();
     }
   }
 
