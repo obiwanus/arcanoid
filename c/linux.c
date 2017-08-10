@@ -1,43 +1,13 @@
-#include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdint.h>
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-#define MAX_INTERNAL_MEMORY_SIZE (1 * 1024 * 1024)  // 1 Mb
+#include "game.h"
 
 #define COUNT_OF(x) \
   ((sizeof(x) / sizeof(0 [x])) / ((size_t)(!(sizeof(x) % sizeof(0 [x])))))
-
-typedef uint32_t u32;
-
-typedef enum Input_Button {
-  IB_up = 0,
-  IB_down,
-  IB_left,
-  IB_right,
-
-  IB_space,
-  IB_shift,
-  IB_escape,
-
-  IB__COUNT,
-} Input_Button;
-
-typedef struct User_Input {
-  bool buttons[IB__COUNT];
-  bool key_pressed;
-
-  struct User_Input *old;
-} User_Input;
-
-typedef struct Pixel_Buffer {
-  u32 *pixels;
-  int width;
-  int height;
-} Pixel_Buffer;
 
 bool button_is_down(User_Input *input, Input_Button button);
 bool button_was_down(User_Input *input, Input_Button button);
@@ -48,25 +18,6 @@ bool button_went_up(User_Input *input, Input_Button button);
 bool g_running = true;
 XImage *g_ximage;
 
-void draw_rect(Pixel_Buffer *screen, int left, int top, int width, int height, u32 color) {
-  int right = left + width;
-  int bottom = top + height;
-  if (left < 0) left = 0;
-  if (top < 0) top = 0;
-  if (right > screen->width) right = screen->width;
-  if (bottom > screen->height) bottom = screen->height;
-  for (int y = top; y < bottom; ++y) {
-    u32 *pixel = screen->pixels + screen->width * y + left;
-    for (int x = left; x < right; ++x) {
-      *pixel++ = color;
-    }
-  }
-}
-
-bool update_and_render(Pixel_Buffer *screen, User_Input *input) {
-  draw_rect(screen, 100, 100, 100, 20, 0x00FFFFFF);
-  return true;
-}
 
 int main(int argc, char *argv[]) {
   Display *display;
