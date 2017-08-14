@@ -9,6 +9,11 @@ bool ButtonWasDown(User_Input *input, Input_Button button) {
   return input->old->buttons[button];
 }
 
+void DrawPixel(Pixel_Buffer *screen, int x, int y, u32 color) {
+  u32 *pixel = screen->pixels + screen->width * y + x;
+  *pixel = color;
+}
+
 void DrawRect(Pixel_Buffer *screen, int left, int top, int width, int height,
               u32 color) {
   int right = left + width;
@@ -21,6 +26,27 @@ void DrawRect(Pixel_Buffer *screen, int left, int top, int width, int height,
     u32 *pixel = screen->pixels + screen->width * y + left;
     for (int x = left; x < right; ++x) {
       *pixel++ = color;
+    }
+  }
+}
+
+void DrawCircle(Pixel_Buffer *screen, float X, float Y, float radius, u32 color) {
+  float screen_right = (float)screen->width;
+  float screen_bottom = (float)screen->height;
+
+  float left = (X > radius) ? X - radius : 0;
+  float right = (X + radius < screen_right) ? X + radius : screen_right - 1;
+  float top = (Y > radius) ? Y - radius : 0;
+  float bottom = (Y + radius < screen_bottom) ? Y + radius : screen_bottom - 1;
+
+  // The simplest brute force algorithm
+  float sq_radius = radius * radius;
+  for (float y = top; y <= bottom; y += 1.0f) {
+    for (float x = left; x <= right; x += 1.0f) {
+      float sq_distance = (x - X) * (x - X) + (y - Y) * (y -Y);
+      if (sq_distance <= sq_radius) {
+        DrawPixel(screen, (int)x, (int)y, color);  // know it's not efficient
+      }
     }
   }
 }
@@ -52,6 +78,10 @@ void MoveBat(Bat *bat, User_Input *input) {
   bat->left += move;
 }
 
+void DrawBall(Pixel_Buffer *screen, Ball *ball) {
+  DrawCircle(screen, ball->x, ball->y, ball->radius, ball->color);
+}
+
 bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
                      User_Input *input) {
   if (ButtonIsDown(input, IB_escape)) {
@@ -65,6 +95,9 @@ bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
   MoveBat(bat, input);
 
   DrawBat(screen, bat);
+  for (int i = 0; i < state->ball_count; ++i) {
+    DrawBall(screen, &state->balls[i]);
+  }
 
   return true;
 }
