@@ -62,4 +62,6 @@ typedef struct Program_State {
 bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
                      User_Input *input);
 
+void InitGameState(Program_State *state);
+
 #endif  // _GAME_H_

@@ -80,19 +80,7 @@ int main(int argc, char *argv[]) {
 
   // Init program state
   Program_State state;
-  {
-    state.bat.left = 100.0f;
-    state.bat.bottom = 10;
-    state.bat.width = 40;
-    state.bat.height = 10;
-    state.bat.color = 0x00FFFFFF;
-    state.ball_count = 1;
-    Ball *main_ball = &state.balls[0];
-    // TODO: draw attached
-    main_ball->radius = 5.0f;
-    main_ball->x = state.bat.left + state.bat.width / 2;
-    main_ball->y = state.bat.bottom + state.bat.height + main_ball->radius / 2;
-  }
+  InitGameState(&state);
 
   // Main loop
   g_running = true;

@@ -9,6 +9,20 @@ bool ButtonWasDown(User_Input *input, Input_Button button) {
   return input->old->buttons[button];
 }
 
+void InitGameState(Program_State *state) {
+  state->bat.left = 100.0f;
+  state->bat.bottom = 10;
+  state->bat.width = 40;
+  state->bat.height = 10;
+  state->bat.color = 0x00FFFFFF;
+  state->ball_count = 1;
+  Ball *main_ball = &state->balls[0];
+  // TODO: draw attached
+  main_ball->radius = 5.0f;
+  main_ball->x = state->bat.left + state->bat.width / 2;
+  main_ball->y = state->bat.bottom + state->bat.height + main_ball->radius / 2;
+}
+
 void DrawPixel(Pixel_Buffer *screen, int x, int y, u32 color) {
   u32 *pixel = screen->pixels + screen->width * y + x;
   *pixel = color;
