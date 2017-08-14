@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#define BG_COLOR 0x00000000
+
 typedef uint32_t u32;
 typedef uint64_t u64;
 
@@ -34,6 +36,30 @@ typedef struct Pixel_Buffer {
   int height;
 } Pixel_Buffer;
 
-bool UpdateAndRender(Pixel_Buffer *screen, User_Input *input);
+typedef struct Bat {
+  float left;
+  int bottom;  // const
+  int width;
+  int height;
+  u32 color;
+} Bat;
+
+typedef struct Ball {
+  float x;
+  float y;
+  float radius;
+  u32 color;
+} Ball;
+
+#define MAX_BALLS 10
+
+typedef struct Program_State {
+  Ball balls[MAX_BALLS];
+  Bat bat;
+  int ball_count;
+} Program_State;
+
+bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
+                     User_Input *input);
 
 #endif  // _GAME_H_

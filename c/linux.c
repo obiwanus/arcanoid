@@ -72,10 +72,27 @@ int main(int argc, char *argv[]) {
   Atom wmDeleteMessage = XInternAtom(display, "WM_DELETE_WINDOW", False);
   XSetWMProtocols(display, window, &wmDeleteMessage, 1);
 
+  // Init inputs
   User_Input inputs[2];
   User_Input *old_input = &inputs[0];
   User_Input *new_input = &inputs[1];
   *new_input = (const User_Input){0};
+
+  // Init program state
+  Program_State state;
+  {
+    state.bat.left = 100.0f;
+    state.bat.bottom = 10;
+    state.bat.width = 40;
+    state.bat.height = 10;
+    state.bat.color = 0x00FFFFFF;
+    state.ball_count = 1;
+    Ball *main_ball = &state.balls[0];
+    // TODO: draw attached
+    main_ball->radius = 5.0f;
+    main_ball->x = state.bat.left + state.bat.width / 2;
+    main_ball->y = state.bat.bottom + state.bat.height + main_ball->radius / 2;
+  }
 
   // Main loop
   g_running = true;
@@ -165,7 +182,7 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    bool result = UpdateAndRender(&pixel_buffer, new_input);
+    bool result = UpdateAndRender(&pixel_buffer, &state, new_input);
     if (!result) {
       g_running = false;
     }
@@ -202,7 +219,7 @@ int main(int argc, char *argv[]) {
           ns_elapsed = LinuxGetWallClock() - last_timestamp;
         }
       } else {
-        printf("Frame missed\n");
+        // printf("Frame missed\n");
       }
 
       last_timestamp = LinuxGetWallClock();
