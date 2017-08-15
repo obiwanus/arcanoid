@@ -45,13 +45,13 @@ typedef struct Bat {
 } Bat;
 
 typedef struct Ball {
-  int speed_x;
-  int speed_y;
-  bool attached;
   float x;
   float y;
   float radius;
   u32 color;
+  int speed_x;
+  int speed_y;
+  bool attached;
 } Ball;
 
 #define MAX_BALLS 10

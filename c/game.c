@@ -84,7 +84,12 @@ void DrawBat(Pixel_Buffer *screen, Bat *bat) {
 
 #define BAT_MOVE_STEP 6.0f
 
-void MoveBat(Bat *bat, User_Input *input, Pixel_Buffer *screen) {
+void MoveBat(Pixel_Buffer *screen, Bat *bat, User_Input *input) {
+
+  // Erase first
+  EraseBat(screen, bat);
+
+  // Move
   float move = 0;
   if (ButtonIsDown(input, IB_left)) {
     move -= BAT_MOVE_STEP;
@@ -100,15 +105,22 @@ void MoveBat(Bat *bat, User_Input *input, Pixel_Buffer *screen) {
   if (bat->left + bat->width > kRight) {
     bat->left = kRight - bat->width;
   }
+
+  // Redraw
+  DrawBat(screen, bat);
 }
 
-void DrawBall(Pixel_Buffer *screen, Ball *ball) {
-  DrawCircle(screen, ball->x, ball->y, ball->radius, ball->color);
-}
-
-void DrawAllBalls(Pixel_Buffer *screen, Program_State *state) {
+void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
   for (int i = 0; i < state->ball_count; ++i) {
-    DrawBall(screen, &state->balls[i]);
+    Ball *ball = state->balls + i;
+
+    // Erase
+    DrawCircle(screen, ball->x, ball->y, ball->radius, BG_COLOR);
+
+    // Move
+
+    // Redraw
+    DrawCircle(screen, ball->x, ball->y, ball->radius, ball->color);
   }
 }
 
@@ -120,13 +132,8 @@ bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
 
   Bat *bat = &state->bat;
 
-  EraseBat(screen, bat);
-
-  MoveBat(bat, input, screen);
-
-  DrawBat(screen, bat);
-  // DrawAllBalls(screen, state);
-
+  MoveBat(screen, bat, input);
+  MoveBalls(screen, state);
 
   return true;
 }
