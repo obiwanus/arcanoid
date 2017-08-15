@@ -35,3 +35,11 @@ arcanoid
 .depend
 
 *.sublime-workspace
+
+*.pro
+*.pro.*
+*.creator*
+*.config
+*.files
+*.includes
+

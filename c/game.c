@@ -22,6 +22,8 @@ void InitGameState(Program_State *state) {
   main_ball->color = 0x00FFFFFF;
   main_ball->x = state->bat.left + state->bat.width / 2;
   main_ball->y = state->bat.bottom + state->bat.height + main_ball->radius / 2;
+  main_ball->speed_x = main_ball->speed_y = 0;
+  main_ball->attached = true;
 }
 
 void DrawPixel(Pixel_Buffer *screen, int x, int y, u32 color) {
@@ -104,6 +106,12 @@ void DrawBall(Pixel_Buffer *screen, Ball *ball) {
   DrawCircle(screen, ball->x, ball->y, ball->radius, ball->color);
 }
 
+void DrawAllBalls(Pixel_Buffer *screen, Program_State *state) {
+  for (int i = 0; i < state->ball_count; ++i) {
+    DrawBall(screen, &state->balls[i]);
+  }
+}
+
 bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
                      User_Input *input) {
   if (ButtonIsDown(input, IB_escape)) {
@@ -117,9 +125,8 @@ bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
   MoveBat(bat, input, screen);
 
   DrawBat(screen, bat);
-  for (int i = 0; i < state->ball_count; ++i) {
-    DrawBall(screen, &state->balls[i]);
-  }
+  // DrawAllBalls(screen, state);
+
 
   return true;
 }

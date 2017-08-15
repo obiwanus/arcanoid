@@ -1,8 +1,9 @@
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-
+#define _XOPEN_SOURCE 700
 #include <time.h>
 #include <unistd.h>
+
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
 
 #include "game.h"
 

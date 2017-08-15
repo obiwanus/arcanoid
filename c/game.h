@@ -45,6 +45,9 @@ typedef struct Bat {
 } Bat;
 
 typedef struct Ball {
+  int speed_x;
+  int speed_y;
+  bool attached;
   float x;
   float y;
   float radius;

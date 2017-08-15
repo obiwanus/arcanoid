@@ -1,27 +1,24 @@
+.SUFFIXES:
+.SUFFIXES: .o .c .h
+
 appname := arcanoid
 
-CXX := clang
-CXXFLAGS := -std=c11 -g
+CC := clang
+CFLAGS := -g -std=c11
 LDLIBS := -lX11 -lm -ldl
 
 srcfiles := $(shell find . -name "*.c")
+hfiles := $(shell find . -name "*.h")
 objects  := $(patsubst %.c, %.o, $(srcfiles))
 
 all: $(appname)
 
-$(appname): $(objects)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $(appname) $(objects) $(LDLIBS)
+%.o : %.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
-depend: .depend
-
-.depend: $(srcfiles)
-	rm -f ./.depend
-	$(CXX) $(CXXFLAGS) -MM $^>>./.depend;
+$(appname): $(objects) $(hfiles)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $(appname) $(objects) $(LDLIBS)
 
 clean:
 	rm -f $(objects)
-
-dist-clean: clean
-	rm -f *~ .depend
-
-include .depend
+	rm -f $(appname)
