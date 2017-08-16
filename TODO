@@ -1,10 +1,11 @@
-- Ball can change direction when bouncing off the bat
+- Use lerp to allow different angles of reflection
 
 
 ========================================================================
 DONE:
 
 17 Aug 2017
+- Ball can change direction when bouncing off the bat
 - Ball bounces off the bat
 - Ball moving and bouncing around
 

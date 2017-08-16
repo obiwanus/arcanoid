@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <math.h>
 
+#include "vectors.h"
+
 #define BG_COLOR 0x00000000
 
 typedef uint32_t u32;
@@ -24,11 +26,6 @@ typedef enum Input_Button {
 
   IB__COUNT,
 } Input_Button;
-
-typedef struct v2 {
-  float x;
-  float y;
-} v2;
 
 typedef struct User_Input {
   bool buttons[IB__COUNT];
