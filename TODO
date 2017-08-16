@@ -1,4 +1,3 @@
-- Ball bounces off the bat
 - Ball can change direction when bouncing off the bat
 
 
@@ -6,6 +5,7 @@
 DONE:
 
 17 Aug 2017
+- Ball bounces off the bat
 - Ball moving and bouncing around
 
 16 Aug 2017

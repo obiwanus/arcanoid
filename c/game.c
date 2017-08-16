@@ -49,7 +49,8 @@ void DrawRect(Pixel_Buffer *screen, int left, int top, int width, int height,
   }
 }
 
-void DrawCircle(Pixel_Buffer *screen, float X, float Y, float radius, u32 color) {
+void DrawCircle(Pixel_Buffer *screen, float X, float Y, float radius,
+                u32 color) {
   float screen_right = (float)screen->width;
   float screen_bottom = (float)screen->height;
 
@@ -62,7 +63,7 @@ void DrawCircle(Pixel_Buffer *screen, float X, float Y, float radius, u32 color)
   float sq_radius = radius * radius;
   for (float y = top; y <= bottom; y += 1.0f) {
     for (float x = left; x <= right; x += 1.0f) {
-      float sq_distance = (x - X) * (x - X) + (y - Y) * (y -Y);
+      float sq_distance = (x - X) * (x - X) + (y - Y) * (y - Y);
       if (sq_distance < sq_radius) {
         DrawPixel(screen, (int)x, (int)y, color);  // know it's not efficient
       }
@@ -88,7 +89,6 @@ void DrawBat(Pixel_Buffer *screen, Bat *bat) {
 #define BAT_MOVE_STEP 6.0f
 
 void MoveBat(Pixel_Buffer *screen, Bat *bat, User_Input *input) {
-
   // Erase first
   EraseBat(screen, bat);
 
@@ -136,6 +136,19 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
     }
     if (ball->y < kTop || ball->y > kBottom) {
       ball->y = (ball->y < kTop) ? kLeft : kBottom;
+      ball->speed_y = -ball->speed_y;
+    }
+
+    // Collision with the bat
+    Bat *bat = &state->bat;
+    const int kBLeft = bat->left - ball->radius,
+              kBRight = bat->left + bat->width + ball->radius,
+              kBBottom = screen->height - bat->bottom,
+              kBTop = kBBottom - bat->height - ball->radius;
+    bool collides = (kBLeft <= ball->x && ball->x <= kBRight &&
+                     kBTop <= ball->y && ball->y <= kBBottom);
+    if (collides) {
+      ball->y = kBTop;
       ball->speed_y = -ball->speed_y;
     }
 
