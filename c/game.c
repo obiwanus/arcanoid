@@ -24,7 +24,7 @@ void InitGameState(Program_State *state) {
   main_ball->color = 0x00FFFFFF;
   main_ball->x = state->bat.left + state->bat.width / 2;
   main_ball->y = state->bat.bottom + state->bat.height + main_ball->radius / 2;
-  main_ball->speed_x = main_ball->speed_y = START_BALL_SPEED;
+  main_ball->speed.x = main_ball->speed.y = START_BALL_SPEED;
   main_ball->attached = true;
 }
 
@@ -121,8 +121,8 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
     DrawCircle(screen, ball->x, ball->y, ball->radius, BG_COLOR);
 
     // Move
-    ball->x += ball->speed_x;
-    ball->y += ball->speed_y;
+    ball->x += ball->speed.x;
+    ball->y += ball->speed.y;
 
     // Collision with screen borders
     const int kLeft = SCREEN_PADDING + ball->radius,
@@ -132,24 +132,33 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
 
     if (ball->x < kLeft || ball->x > kRight) {
       ball->x = (ball->x < kLeft) ? kLeft : kRight;
-      ball->speed_x = -ball->speed_x;
+      ball->speed.x = -ball->speed.x;
     }
     if (ball->y < kTop || ball->y > kBottom) {
       ball->y = (ball->y < kTop) ? kLeft : kBottom;
-      ball->speed_y = -ball->speed_y;
+      ball->speed.y = -ball->speed.y;
     }
 
     // Collision with the bat
     Bat *bat = &state->bat;
-    const int kBLeft = bat->left - ball->radius,
-              kBRight = bat->left + bat->width + ball->radius,
-              kBBottom = screen->height - bat->bottom,
-              kBTop = kBBottom - bat->height - ball->radius;
+    const float kBLeft = bat->left - ball->radius,
+                kBRight = bat->left + bat->width + ball->radius,
+                kBBottom = screen->height - bat->bottom,
+                kBTop = kBBottom - bat->height - ball->radius,
+                kBMiddle = (kBLeft + kBRight) / 2.0f;
     bool collides = (kBLeft <= ball->x && ball->x <= kBRight &&
                      kBTop <= ball->y && ball->y <= kBBottom);
     if (collides) {
       ball->y = kBTop;
-      ball->speed_y = -ball->speed_y;
+      ball->speed.y = -ball->speed.y;
+      const float kReflect = bat->width / 8.0f;
+      if (kBMiddle - kReflect <= ball->x && ball->x <= kBMiddle + kReflect) {
+        // reflect as is if hit the middle
+      } else if (ball->x < kBMiddle) {
+        ball->speed.x = -fabsf(ball->speed.x);
+      } else {
+        ball->speed.x = fabsf(ball->speed.x);
+      }
     }
 
     // Redraw

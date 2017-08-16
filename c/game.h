@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 
 #define BG_COLOR 0x00000000
 
@@ -23,6 +24,11 @@ typedef enum Input_Button {
 
   IB__COUNT,
 } Input_Button;
+
+typedef struct v2 {
+  float x;
+  float y;
+} v2;
 
 typedef struct User_Input {
   bool buttons[IB__COUNT];
@@ -45,13 +51,12 @@ typedef struct Bat {
 } Bat;
 
 typedef struct Ball {
-  float x;
-  float y;
+  bool attached;
   float radius;
   u32 color;
-  int speed_x;
-  int speed_y;
-  bool attached;
+  float x;
+  float y;
+  v2 speed;
 } Ball;
 
 #define MAX_BALLS 10
