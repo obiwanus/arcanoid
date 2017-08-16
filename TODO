@@ -1,8 +1,12 @@
-- Ball moving and bouncing around
+- Ball bounces off the bat
+- Ball can change direction when bouncing off the bat
 
 
 ========================================================================
 DONE:
+
+17 Aug 2017
+- Ball moving and bouncing around
 
 16 Aug 2017
 - Restrict the movement of the bat

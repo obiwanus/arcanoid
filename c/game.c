@@ -9,6 +9,8 @@ bool ButtonWasDown(User_Input *input, Input_Button button) {
   return input->old->buttons[button];
 }
 
+#define START_BALL_SPEED 5
+
 void InitGameState(Program_State *state) {
   state->bat.left = 100.0f;
   state->bat.bottom = 10;
@@ -22,7 +24,7 @@ void InitGameState(Program_State *state) {
   main_ball->color = 0x00FFFFFF;
   main_ball->x = state->bat.left + state->bat.width / 2;
   main_ball->y = state->bat.bottom + state->bat.height + main_ball->radius / 2;
-  main_ball->speed_x = main_ball->speed_y = 0;
+  main_ball->speed_x = main_ball->speed_y = START_BALL_SPEED;
   main_ball->attached = true;
 }
 
@@ -82,6 +84,7 @@ void DrawBat(Pixel_Buffer *screen, Bat *bat) {
   _DrawBat(screen, bat, bat->color);
 }
 
+#define SCREEN_PADDING 2
 #define BAT_MOVE_STEP 6.0f
 
 void MoveBat(Pixel_Buffer *screen, Bat *bat, User_Input *input) {
@@ -97,7 +100,7 @@ void MoveBat(Pixel_Buffer *screen, Bat *bat, User_Input *input) {
   if (ButtonIsDown(input, IB_right)) {
     move += BAT_MOVE_STEP;
   }
-  const int kLeft = 2, kRight = screen->width - 2;
+  const int kLeft = SCREEN_PADDING, kRight = screen->width - SCREEN_PADDING;
   bat->left += move;
   if (bat->left < kLeft) {
     bat->left = kLeft;
@@ -118,6 +121,23 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
     DrawCircle(screen, ball->x, ball->y, ball->radius, BG_COLOR);
 
     // Move
+    ball->x += ball->speed_x;
+    ball->y += ball->speed_y;
+
+    // Collision with screen borders
+    const int kLeft = SCREEN_PADDING + ball->radius,
+              kRight = screen->width - SCREEN_PADDING - ball->radius,
+              kTop = SCREEN_PADDING + ball->radius,
+              kBottom = screen->height - SCREEN_PADDING - ball->radius;
+
+    if (ball->x < kLeft || ball->x > kRight) {
+      ball->x = (ball->x < kLeft) ? kLeft : kRight;
+      ball->speed_x = -ball->speed_x;
+    }
+    if (ball->y < kTop || ball->y > kBottom) {
+      ball->y = (ball->y < kTop) ? kLeft : kBottom;
+      ball->speed_y = -ball->speed_y;
+    }
 
     // Redraw
     DrawCircle(screen, ball->x, ball->y, ball->radius, ball->color);
