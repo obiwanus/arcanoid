@@ -15,8 +15,14 @@ v2 Normalize(const v2 a) {
 }
 
 v2 Lerp(const v2 a, const v2 b, float t) {
+  if (t < 0) t = 0;
+  if (t > 1.0f) t = 1.0f;
   return V2(
     a.x + t * (b.x - a.x),
     a.y + t * (b.y - a.y)
   );
+}
+
+v2 Scale(const v2 a, const float value) {
+  return V2(value * a.x, value * a.y);
 }

@@ -1,8 +1,12 @@
-- Use lerp to allow different angles of reflection
-
+- Add bricks
+- Clean up collision code
+- (maybe) try to remove stuttering
 
 ========================================================================
 DONE:
+
+18 Aug 2017
+- Use lerp to allow different angles of reflection
 
 17 Aug 2017
 - Ball can change direction when bouncing off the bat
