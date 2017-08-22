@@ -18,7 +18,7 @@ u64 LinuxGetWallClock() {
   u64 result = 0;
   struct timespec spec;
 
-  clock_gettime(CLOCK_MONOTONIC, &spec);
+  clock_gettime(CLOCK_MONOTONIC_RAW, &spec);
   result = spec.tv_nsec;  // ns
 
   return result;
@@ -202,7 +202,7 @@ int main(int argc, char *argv[]) {
         struct timespec ts;
         ts.tv_sec = 0;
         ts.tv_nsec = target_nspf - ns_elapsed;  // time to sleep
-        clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, NULL);
+        clock_nanosleep(CLOCK_MONOTONIC_RAW, 0, &ts, NULL);
 
         while (ns_elapsed < target_nspf) {
           ns_elapsed = LinuxGetWallClock() - last_timestamp;

@@ -152,13 +152,11 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
       ball->y = kBTop;
       ball->speed.y = -ball->speed.y;
 
-      const float kReflect = bat->width / 10.0f;
+      // const float kReflect = bat->width / 10.0f;
       const v2 kVectorUp = {0, -1.0f};
       const v2 kVectorLeft = Normalize(V2(-1.5f, -1.0f));
       const v2 kVectorRight = Normalize(V2(1.5f, -1.0f));
-      if (kBMiddle - kReflect <= ball->x && ball->x <= kBMiddle + kReflect) {
-        // reflect as is if hit the middle
-      } else if (ball->x < kBMiddle) {
+      if (ball->x < kBMiddle) {
         float t = (kBMiddle - ball->x) / (kBMiddle - kBLeft);
         v2 new_direction = Lerp(kVectorUp, kVectorLeft, t);
         ball->speed = Scale(Normalize(new_direction), Length(ball->speed));
