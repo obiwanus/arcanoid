@@ -56,12 +56,19 @@ typedef struct Ball {
   v2 speed;
 } Ball;
 
+typedef struct Level {
+  char *layout;
+
+} Level;
+
 #define MAX_BALLS 10
+#define MAX_LEVELS 10
 
 typedef struct Program_State {
   Ball balls[MAX_BALLS];
   Bat bat;
   int ball_count;
+
 } Program_State;
 
 bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
