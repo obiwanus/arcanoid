@@ -29,6 +29,7 @@ void InitGameState(Program_State *state) {
   main_ball->attached = true;
 
   state->current_level = 0;
+  state->level_initialised = false;
 
   // Init levels
   {
@@ -183,6 +184,10 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
   }
 }
 
+void DrawBricks(Pixel_Buffer *screen, Level *level) {
+
+}
+
 bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
                      User_Input *input) {
   Level *level = state->levels + state->current_level;
@@ -196,6 +201,8 @@ bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
 
   MoveBat(screen, bat, input);
   MoveBalls(screen, state);
+
+  DrawBricks(screen, level);
 
   return true;
 }
