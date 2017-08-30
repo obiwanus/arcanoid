@@ -1,3 +1,4 @@
+#include <assert.h>
 #include "game.h"
 
 bool ButtonIsDown(User_Input *input, Input_Button button) {
@@ -26,6 +27,16 @@ void InitGameState(Program_State *state) {
   main_ball->y = state->bat.bottom + state->bat.height + main_ball->radius / 2;
   main_ball->speed.x = main_ball->speed.y = START_BALL_SPEED;
   main_ball->attached = true;
+
+  state->current_level = 0;
+
+  // Init levels
+  {
+    state->levels[0].layout = \
+      "xxxxxxxxxxx" \
+      " xxxxxxxxx " \
+      "  xxxxxxx  ";
+  }
 }
 
 void DrawPixel(Pixel_Buffer *screen, int x, int y, u32 color) {
@@ -174,6 +185,9 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
 
 bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
                      User_Input *input) {
+  Level *level = state->levels + state->current_level;
+  assert(state->current_level < MAX_LEVELS - 1);
+
   if (ButtonIsDown(input, IB_escape)) {
     return false;
   }

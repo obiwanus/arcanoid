@@ -62,13 +62,14 @@ typedef struct Level {
 } Level;
 
 #define MAX_BALLS 10
-#define MAX_LEVELS 10
+#define MAX_LEVELS 5
 
 typedef struct Program_State {
   Ball balls[MAX_BALLS];
   Bat bat;
   int ball_count;
-
+  Level levels[MAX_LEVELS];
+  int current_level;
 } Program_State;
 
 bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
