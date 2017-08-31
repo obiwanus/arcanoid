@@ -189,9 +189,21 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
   }
 }
 
-void DrawBricks(Pixel_Buffer *screen, Level *level) {
-  for (int y = 0; y < BRICKS_PER_COL; ++y) {
-    for (int x = 0; x < BRICKS_PER_ROW; ++x) {
+void DrawBricks(Pixel_Buffer *screen, Brick *bricks) {
+  // for (int y = 0; y < BRICKS_PER_COL; ++y) {
+  //   for (int x = 0; x < BRICKS_PER_ROW; ++x) {
+
+  //   }
+  // }
+  const int kPadding = 10;
+  const int kBrickWidth = (screen->width - kPadding * 2) / BRICKS_PER_ROW;
+  const int kBrickHeight = 20;
+
+  for (int i = 0; i < BRICKS_PER_ROW * BRICKS_PER_COL; ++i) {
+    if (bricks[i] != Brick_Empty) {
+      int brick_x = (i % BRICKS_PER_ROW) * kBrickWidth + kPadding;
+      int brick_y = (i / BRICKS_PER_ROW) * kBrickHeight + kPadding;
+      DrawRect(screen, brick_x, brick_y, kBrickWidth, kBrickHeight, 0x00FFFFFF);
     }
   }
 }
@@ -243,7 +255,7 @@ bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
   MoveBat(screen, bat, input);
   MoveBalls(screen, state);
 
-  DrawBricks(screen, level);
+  DrawBricks(screen, state->bricks);
 
   return true;
 }
