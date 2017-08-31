@@ -33,15 +33,15 @@ void InitGameState(Program_State *state) {
 
   // Init levels
   {
-    state->levels[0].layout = \
-      "xxxxxxxxxxx\n" \
-      " xxxxxxxxx \n" \
-      "  xxxxxxx  ";
-    state->levels[1].layout = \
-      "xxxxxxxxxxx\n" \
-      " xxxxxxxxx \n" \
-      "  xxxxxxx  \n" \
-      " x x x x x ";
+    state->levels[0].layout =
+        "xxxxxxxxxxx\n"
+        " xxxxxxxxx \n"
+        "  xxxxxxx  ";
+    state->levels[1].layout =
+        "xxxxxxxxxxx\n"
+        " xxxxxxxxx \n"
+        "  xxxxxxx  \n"
+        " x x x x x ";
   }
 }
 
@@ -192,7 +192,6 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
 void DrawBricks(Pixel_Buffer *screen, Level *level) {
   for (int y = 0; y < BRICKS_PER_COL; ++y) {
     for (int x = 0; x < BRICKS_PER_ROW; ++x) {
-
     }
   }
 }
@@ -205,25 +204,33 @@ bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
   // TODO: is it a good idea to check it every time?
   if (!state->level_initialised) {
     // Clean up all bricks
-    int i;
-    for (i = 0; i < BRICKS_PER_ROW * BRICKS_PER_COL; ++i) {
+    for (int i = 0; i < BRICKS_PER_ROW * BRICKS_PER_COL; ++i) {
       state->bricks[i] = Brick_Empty;
     }
 
-    // // Init new bricks
-    // int brick_x = 0, brick_y = 0;
-    // char *b = level->layout;
-    // while (*b != '\0') {
-    //   int brick_num = brick_y * BRICKS_PER_ROW + brick_x;
-    //   if (*b == 'x') {
-    //     state->bricks[brick_num] = Brick_Normal;
-    //   } else if (*b == 'u') {
-    //     state->bricks[brick_num] = Brick_Unbreakable;
-    //   } else {
-    //     state->bricks[brick_num] = Brick_Empty;
-    //   }
-    //   b++;
-    // }
+    // Init new bricks
+    int brick_x = 0, brick_y = 0;
+    char *b = level->layout;
+    while (*b != '\0') {
+      int brick_num = brick_y * BRICKS_PER_ROW + brick_x;
+      if (*b == 'x') {
+        state->bricks[brick_num] = Brick_Normal;
+      } else if (*b == 'u') {
+        state->bricks[brick_num] = Brick_Unbreakable;
+      } else {
+        state->bricks[brick_num] = Brick_Empty;
+      }
+
+      if (*b == '\n') {
+        brick_x = 0;
+        brick_y++;
+      } else {
+        brick_x++;
+      }
+      assert(brick_x < BRICKS_PER_ROW);
+      assert(brick_y < BRICKS_PER_COL);
+      b++;
+    }
     state->level_initialised = true;
   }
 

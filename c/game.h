@@ -69,8 +69,8 @@ typedef enum Brick {
 
 #define MAX_BALLS 10
 #define MAX_LEVELS 5
-#define BRICKS_PER_ROW 3
-#define BRICKS_PER_COL 3
+#define BRICKS_PER_ROW 20
+#define BRICKS_PER_COL 5
 
 typedef struct Program_State {
   Ball balls[MAX_BALLS];
