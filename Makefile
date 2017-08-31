@@ -13,7 +13,7 @@ objects  := $(patsubst %.c, %.o, $(srcfiles))
 
 all: $(appname)
 
-%.o : %.c
+%.o : %.c %.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(appname): $(objects) $(hfiles)

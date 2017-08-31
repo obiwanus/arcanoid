@@ -60,8 +60,17 @@ typedef struct Level {
   char *layout;
 } Level;
 
+typedef enum Brick {
+  Brick_Empty = 0,
+  Brick_Normal,
+  Brick_Unbreakable,
+  Brick__COUNT,
+} Brick;
+
 #define MAX_BALLS 10
 #define MAX_LEVELS 5
+#define BRICKS_PER_ROW 3
+#define BRICKS_PER_COL 3
 
 typedef struct Program_State {
   Ball balls[MAX_BALLS];
@@ -70,7 +79,7 @@ typedef struct Program_State {
   Level levels[MAX_LEVELS];
   int current_level;
   bool level_initialised;
-
+  Brick bricks[BRICKS_PER_COL * BRICKS_PER_ROW];
 } Program_State;
 
 bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,

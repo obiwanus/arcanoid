@@ -1,4 +1,7 @@
 - Add bricks
+- Draw bricks
+- Draw 2 kinds of bricks
+- Collide with bricks
 - Clean up collision code
 - (maybe) try to remove stuttering
 
