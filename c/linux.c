@@ -28,8 +28,8 @@ int main(int argc, char *argv[]) {
   Display *display;
   Window window;
 
-  const int kWindowWidth = 640;
-  const int kWindowHeight = 480;
+  const int kWindowWidth = 480;
+  const int kWindowHeight = 640;
 
   // Open display
   display = XOpenDisplay(NULL);

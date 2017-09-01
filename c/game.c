@@ -28,7 +28,7 @@ void InitGameState(Program_State *state) {
   main_ball->speed.x = main_ball->speed.y = START_BALL_SPEED;
   main_ball->attached = true;
 
-  state->current_level = 0;
+  state->current_level = 1;
   state->level_initialised = false;
 
   // Init levels
@@ -224,23 +224,22 @@ bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
     int brick_x = 0, brick_y = 0;
     char *b = level->layout;
     while (*b != '\0') {
-      int brick_num = brick_y * BRICKS_PER_ROW + brick_x;
-      if (*b == 'x') {
-        state->bricks[brick_num] = Brick_Normal;
-      } else if (*b == 'u') {
-        state->bricks[brick_num] = Brick_Unbreakable;
-      } else {
-        state->bricks[brick_num] = Brick_Empty;
-      }
-
       if (*b == '\n') {
         brick_x = 0;
         brick_y++;
       } else {
+        assert(brick_x < BRICKS_PER_ROW);
+        assert(brick_y < BRICKS_PER_COL);
+        int brick_num = brick_y * BRICKS_PER_ROW + brick_x;
+        if (*b == 'x') {
+          state->bricks[brick_num] = Brick_Normal;
+        } else if (*b == 'u') {
+          state->bricks[brick_num] = Brick_Unbreakable;
+        } else {
+          state->bricks[brick_num] = Brick_Empty;
+        }
         brick_x++;
       }
-      assert(brick_x < BRICKS_PER_ROW);
-      assert(brick_y < BRICKS_PER_COL);
       b++;
     }
     state->level_initialised = true;
