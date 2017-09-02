@@ -4,7 +4,7 @@
 appname := arcanoid
 
 CC := clang
-CFLAGS := -g -std=c11
+CFLAGS := -g -std=c11 -Wall -Wconversion
 LDLIBS := -lX11 -lm -ldl
 
 srcfiles := $(shell find . -name "*.c")

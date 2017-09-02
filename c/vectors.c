@@ -6,7 +6,7 @@ v2 V2(float x, float y) {
 }
 
 float Length(const v2 a) {
-  return sqrt(a.x * a.x + a.y * a.y);
+  return (float)sqrt(a.x * a.x + a.y * a.y);
 }
 
 v2 Normalize(const v2 a) {

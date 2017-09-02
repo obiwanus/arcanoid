@@ -19,7 +19,7 @@ u64 LinuxGetWallClock() {
   struct timespec spec;
 
   clock_gettime(CLOCK_MONOTONIC_RAW, &spec);
-  result = spec.tv_nsec;  // ns
+  result = (u64)spec.tv_nsec;  // ns
 
   return result;
 }
@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
   User_Input inputs[2];
   User_Input *old_input = &inputs[0];
   User_Input *new_input = &inputs[1];
-  *new_input = (const User_Input){0};
+  *new_input = (const User_Input){};
 
   // Init program state
   Program_State state;
@@ -185,7 +185,7 @@ int main(int argc, char *argv[]) {
     new_input = tmp;
 
     // Zero input
-    *new_input = (const User_Input){0};
+    *new_input = (const User_Input){};
     new_input->old = old_input;  // Save so we can refer to it later
 
     // Retain the button state
@@ -195,13 +195,12 @@ int main(int argc, char *argv[]) {
 
     // Limit FPS
     {
-      u64 current_timestamp = LinuxGetWallClock();
       u64 ns_elapsed = LinuxGetWallClock() - last_timestamp;
 
       if (ns_elapsed < target_nspf) {
         struct timespec ts;
         ts.tv_sec = 0;
-        ts.tv_nsec = target_nspf - ns_elapsed;  // time to sleep
+        ts.tv_nsec = (long)target_nspf - (long)ns_elapsed;  // time to sleep
         clock_nanosleep(CLOCK_MONOTONIC_RAW, 0, &ts, NULL);
 
         while (ns_elapsed < target_nspf) {

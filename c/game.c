@@ -6,6 +6,11 @@ int Abs(int x) {
   return x;
 }
 
+float FAbs(float x) {
+  if (x < 0) return -x;
+  return x;
+}
+
 bool ButtonIsDown(User_Input *input, Input_Button button) {
   return input->buttons[button];
 }
@@ -29,22 +34,31 @@ void InitGameState(Program_State *state, Pixel_Buffer *screen) {
   main_ball->radius = 8.f;
   main_ball->color = 0x00FFFFFF;
   main_ball->x = state->bat.left + state->bat.width / 2;
-  main_ball->y = screen->height - (state->bat.bottom + state->bat.height +
-                                   main_ball->radius / 2) - 10;
+  main_ball->y =
+      screen->height -
+      (state->bat.bottom + state->bat.height + main_ball->radius / 2) - 10;
   main_ball->speed.x = START_BALL_SPEED;
   main_ball->speed.y = -START_BALL_SPEED;
   main_ball->attached = true;
 
-  state->current_level = 1;
+  state->current_level = 0;
   state->level_initialised = false;
 
   // Init levels
   {
     state->levels[0].layout =
+        "xx xxxxx xx\n"
+        "xx xxxxx xx\n"
+        "xx xxxxx xx\n"
+        "xx xxxxx xx\n"
+        "xx xxxxx xx\n"
+        "xx xxxxx xx\n"
+        "xx xxxxx xx";
+    state->levels[1].layout =
         "sxxxxxxxxxs\n"
         " sxxxxxxxs \n"
         "  sssssss  ";
-    state->levels[1].layout =
+    state->levels[2].layout =
         "sxxxxxxxxxs\n"
         " sxxxxxxxs \n"
         "  sssssss  \n"
@@ -163,10 +177,10 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
     ball->y += ball->speed.y;
 
     // Collision with screen borders
-    const int kLeft = SCREEN_PADDING + ball->radius,
-              kRight = screen->width - SCREEN_PADDING - ball->radius,
-              kTop = SCREEN_PADDING + ball->radius,
-              kBottom = screen->height - SCREEN_PADDING - ball->radius;
+    const float kLeft = SCREEN_PADDING + ball->radius,
+                kRight = screen->width - SCREEN_PADDING - ball->radius,
+                kTop = SCREEN_PADDING + ball->radius,
+                kBottom = screen->height - SCREEN_PADDING - ball->radius;
 
     if (ball->x < kLeft || ball->x > kRight) {
       ball->x = (ball->x < kLeft) ? kLeft : kRight;
@@ -216,10 +230,10 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
         Rect brick_rect = GetBrickRect(screen, i);
 
         // Check collision
-        const int left = brick_rect.left - ball->radius;
-        const int right = brick_rect.left + brick_rect.width + ball->radius;
-        const int top = brick_rect.top - ball->radius;
-        const int bottom = brick_rect.top + brick_rect.height + ball->radius;
+        const float left = brick_rect.left - ball->radius;
+        const float right = brick_rect.left + brick_rect.width + ball->radius;
+        const float top = brick_rect.top - ball->radius;
+        const float bottom = brick_rect.top + brick_rect.height + ball->radius;
 
         // TODO: handle corners
         bool collides = (left <= ball->x && ball->x <= right &&
@@ -234,15 +248,19 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
           DrawRect(screen, brick_rect, BG_COLOR);
         }
 
-        int ldist = Abs(left - ball->x);
-        int rdist = Abs(right - ball->x);
-        int tdist = Abs(top - ball->y);
-        int bdist = Abs(bottom - ball->y);
+        float ldist = FAbs(left - ball->x);
+        float rdist = FAbs(right - ball->x);
+        float tdist = FAbs(top - ball->y);
+        float bdist = FAbs(bottom - ball->y);
 
         if (ldist + rdist < tdist + bdist) {
-          ball->speed.x = -ball->speed.x;
+          ball->x = (ldist < rdist) ? left : right;
+          ball->speed.x =
+              (ldist < rdist) ? -FAbs(ball->speed.x) : FAbs(ball->speed.x);
         } else {
-          ball->speed.y = -ball->speed.y;
+          ball->y = (tdist < bdist) ? top : bottom;
+          ball->speed.y =
+              (tdist < bdist) ? -FAbs(ball->speed.y) : FAbs(ball->speed.y);
         }
       }
     }

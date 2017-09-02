@@ -1,4 +1,3 @@
-- Fix the multiple collision problem
 - Check for winning
 - Change level
 - Have a chance of dropping a buff/debuff
@@ -20,6 +19,7 @@ DONE:
 - Draw 2 kinds of bricks
 - Collide with bricks
 - Let bricks have hitpoints
+- Fix the multiple collision problem
 
 1 Sep 2017
 - Add bricks
