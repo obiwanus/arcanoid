@@ -1,6 +1,4 @@
-- Collide with bricks
-- Clean up collision code
-- (maybe) try to remove stuttering
+- Fix the multiple collision problem
 - Check for winning
 - Change level
 - Have a chance of dropping a buff/debuff
@@ -12,6 +10,7 @@
 - Shooting
 - Colorful bricks
 - Draw walls
+- (maybe) try to remove stuttering
 
 
 ========================================================================
@@ -19,6 +18,8 @@ DONE:
 
 3 Sep 2017
 - Draw 2 kinds of bricks
+- Collide with bricks
+- Let bricks have hitpoints
 
 1 Sep 2017
 - Add bricks

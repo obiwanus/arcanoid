@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
 
   // Init program state
   Program_State state;
-  InitGameState(&state);
+  InitGameState(&state, &pixel_buffer);
 
   // Main loop
   g_running = true;

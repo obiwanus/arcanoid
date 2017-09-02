@@ -1,6 +1,11 @@
 #include <assert.h>
 #include "game.h"
 
+int Abs(int x) {
+  if (x < 0) return -x;
+  return x;
+}
+
 bool ButtonIsDown(User_Input *input, Input_Button button) {
   return input->buttons[button];
 }
@@ -12,9 +17,9 @@ bool ButtonWasDown(User_Input *input, Input_Button button) {
 
 #define START_BALL_SPEED 5
 
-void InitGameState(Program_State *state) {
+void InitGameState(Program_State *state, Pixel_Buffer *screen) {
   state->bat.left = 100.0f;
-  state->bat.bottom = 10;
+  state->bat.bottom = 20;
   state->bat.width = 70;
   state->bat.height = 13;
   state->bat.color = 0x00FFFFFF;
@@ -24,8 +29,10 @@ void InitGameState(Program_State *state) {
   main_ball->radius = 8.f;
   main_ball->color = 0x00FFFFFF;
   main_ball->x = state->bat.left + state->bat.width / 2;
-  main_ball->y = state->bat.bottom + state->bat.height + main_ball->radius / 2;
-  main_ball->speed.x = main_ball->speed.y = START_BALL_SPEED;
+  main_ball->y = screen->height - (state->bat.bottom + state->bat.height +
+                                   main_ball->radius / 2) - 10;
+  main_ball->speed.x = START_BALL_SPEED;
+  main_ball->speed.y = -START_BALL_SPEED;
   main_ball->attached = true;
 
   state->current_level = 1;
@@ -132,6 +139,18 @@ void MoveBat(Pixel_Buffer *screen, Bat *bat, User_Input *input) {
   DrawBat(screen, bat);
 }
 
+Rect GetBrickRect(Pixel_Buffer *screen, int number) {
+  const int kPadding = 10;
+  const int kBrickWidth = (screen->width - kPadding * 2) / BRICKS_PER_ROW;
+  const int kBrickHeight = 20;
+
+  int brick_x = (number % BRICKS_PER_ROW) * kBrickWidth + kPadding;
+  int brick_y = (number / BRICKS_PER_ROW) * kBrickHeight + kPadding;
+
+  Rect result = {brick_x, brick_y, kBrickWidth, kBrickHeight};
+  return result;
+}
+
 void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
   for (int i = 0; i < state->ball_count; ++i) {
     Ball *ball = state->balls + i;
@@ -159,38 +178,73 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
     }
 
     // Collision with the bat
-    Bat *bat = &state->bat;
-    const float kBLeft = bat->left - ball->radius,
-                kBRight = bat->left + bat->width + ball->radius,
-                kBBottom = screen->height - bat->bottom,
-                kBTop = kBBottom - bat->height - ball->radius,
-                kBMiddle = (kBLeft + kBRight) / 2.0f;
-    bool collides = (kBLeft <= ball->x && ball->x <= kBRight &&
-                     kBTop <= ball->y && ball->y <= kBBottom);
-    if (collides) {
-      ball->y = kBTop;
-      ball->speed.y = -ball->speed.y;
+    {
+      Bat *bat = &state->bat;
+      const float kBLeft = bat->left - ball->radius,
+                  kBRight = bat->left + bat->width + ball->radius,
+                  kBBottom = screen->height - bat->bottom,
+                  kBTop = kBBottom - bat->height - ball->radius,
+                  kBMiddle = (kBLeft + kBRight) / 2.0f;
+      bool collides = (kBLeft <= ball->x && ball->x <= kBRight &&
+                       kBTop <= ball->y && ball->y <= kBBottom);
+      if (collides) {
+        ball->y = kBTop;
+        ball->speed.y = -ball->speed.y;
 
-      // const float kReflect = bat->width / 10.0f;
-      const v2 kVectorUp = {0, -1.0f};
-      const v2 kVectorLeft = Normalize(V2(-1.5f, -1.0f));
-      const v2 kVectorRight = Normalize(V2(1.5f, -1.0f));
-      if (ball->x < kBMiddle) {
-        float t = (kBMiddle - ball->x) / (kBMiddle - kBLeft);
-        v2 new_direction = Lerp(kVectorUp, kVectorLeft, t);
-        ball->speed = Scale(Normalize(new_direction), Length(ball->speed));
-      } else {
-        float t = (ball->x - kBMiddle) / (kBRight - kBMiddle);
-        v2 new_direction = Lerp(kVectorUp, kVectorRight, t);
-        ball->speed = Scale(Normalize(new_direction), Length(ball->speed));
+        // const float kReflect = bat->width / 10.0f;
+        const v2 kVectorUp = {0, -1.0f};
+        const v2 kVectorLeft = Normalize(V2(-1.5f, -1.0f));
+        const v2 kVectorRight = Normalize(V2(1.5f, -1.0f));
+        if (ball->x < kBMiddle) {
+          float t = (kBMiddle - ball->x) / (kBMiddle - kBLeft);
+          v2 new_direction = Lerp(kVectorUp, kVectorLeft, t);
+          ball->speed = Scale(Normalize(new_direction), Length(ball->speed));
+        } else {
+          float t = (ball->x - kBMiddle) / (kBRight - kBMiddle);
+          v2 new_direction = Lerp(kVectorUp, kVectorRight, t);
+          ball->speed = Scale(Normalize(new_direction), Length(ball->speed));
+        }
       }
     }
 
     // Collision with the bricks (brute force)
-    Brick *bricks = state->bricks;
-    for (int i = 0; i < BRICKS_PER_ROW * BRICKS_PER_COL; ++i) {
-      if (bricks[i] == Brick_Empty) continue;
+    {
+      Brick *bricks = state->bricks;
+      for (int i = 0; i < BRICKS_PER_ROW * BRICKS_PER_COL; ++i) {
+        Brick brick = bricks[i];
+        if (brick == Brick_Empty) continue;
+        Rect brick_rect = GetBrickRect(screen, i);
 
+        // Check collision
+        const int left = brick_rect.left - ball->radius;
+        const int right = brick_rect.left + brick_rect.width + ball->radius;
+        const int top = brick_rect.top - ball->radius;
+        const int bottom = brick_rect.top + brick_rect.height + ball->radius;
+
+        // TODO: handle corners
+        bool collides = (left <= ball->x && ball->x <= right &&
+                         top <= ball->y && ball->y <= bottom);
+        if (!collides) continue;
+
+        if (brick == Brick_Strong) {
+          bricks[i] = Brick_Normal;
+        } else if (brick == Brick_Normal) {
+          // Erase
+          bricks[i] = Brick_Empty;
+          DrawRect(screen, brick_rect, BG_COLOR);
+        }
+
+        int ldist = Abs(left - ball->x);
+        int rdist = Abs(right - ball->x);
+        int tdist = Abs(top - ball->y);
+        int bdist = Abs(bottom - ball->y);
+
+        if (ldist + rdist < tdist + bdist) {
+          ball->speed.x = -ball->speed.x;
+        } else {
+          ball->speed.y = -ball->speed.y;
+        }
+      }
     }
 
     // Redraw
@@ -198,20 +252,7 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
   }
 }
 
-Rect GetBrickRect(Pixel_Buffer *screen, int number) {
-  const int kPadding = 10;
-  const int kBrickWidth = (screen->width - kPadding * 2) / BRICKS_PER_ROW;
-  const int kBrickHeight = 20;
-
-  int brick_x = (number % BRICKS_PER_ROW) * kBrickWidth + kPadding;
-  int brick_y = (number / BRICKS_PER_ROW) * kBrickHeight + kPadding;
-
-  Rect result = {brick_x, brick_y, kBrickWidth, kBrickHeight};
-  return result;
-}
-
 void DrawBricks(Pixel_Buffer *screen, Brick *bricks) {
-
   for (int i = 0; i < BRICKS_PER_ROW * BRICKS_PER_COL; ++i) {
     if (bricks[i] == Brick_Empty) continue;
 
