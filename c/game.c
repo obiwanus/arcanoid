@@ -20,6 +20,12 @@ bool ButtonWasDown(User_Input *input, Input_Button button) {
   return input->old->buttons[button];
 }
 
+void AttachToBat(Ball *ball, Bat *bat, Pixel_Buffer *screen) {
+  ball->x = bat->left + bat->width / 2 + 5;
+  ball->y =
+      screen->height - (bat->bottom + bat->height + ball->radius / 2) - 5;
+}
+
 #define START_BALL_SPEED 5
 
 void InitGameState(Program_State *state, Pixel_Buffer *screen) {
@@ -30,13 +36,10 @@ void InitGameState(Program_State *state, Pixel_Buffer *screen) {
   state->bat.color = 0x00FFFFFF;
   state->ball_count = 1;
   Ball *main_ball = &state->balls[0];
-  // TODO: draw attached
   main_ball->radius = 8.f;
   main_ball->color = 0x00FFFFFF;
-  main_ball->x = state->bat.left + state->bat.width / 2;
-  main_ball->y =
-      screen->height -
-      (state->bat.bottom + state->bat.height + main_ball->radius / 2) - 10;
+  main_ball->attached = true;
+  AttachToBat(main_ball, &state->bat, screen);
   main_ball->speed.x = START_BALL_SPEED;
   main_ball->speed.y = -START_BALL_SPEED;
   main_ball->attached = true;
@@ -214,6 +217,10 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
     // Erase
     DrawCircle(screen, ball->x, ball->y, ball->radius, BG_COLOR);
 
+    if (ball->attached) {
+      AttachToBat(ball, &state->bat, screen);
+    }
+
     // Move
     ball->x += ball->speed.x;
     ball->y += ball->speed.y;
@@ -375,6 +382,12 @@ bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
 
   if (ButtonIsDown(input, IB_escape)) {
     return false;
+  }
+
+  if (ButtonWasDown(input, IB_space)) {
+    for (int i = 0; i < state->ball_count; ++i) {
+      state->balls[i].attached = false;
+    }
   }
 
   Bat *bat = &state->bat;

@@ -1,4 +1,4 @@
-- Start sticky
+- Release ball
 - Reset ball to sticky state after change level
 - Ball speed up
 - Have a chance of dropping a buff/debuff
@@ -26,6 +26,7 @@ DONE:
 - Make a few nice levels
 - Check for winning
 - Change level
+- Start sticky
 
 1 Sep 2017
 - Add bricks
