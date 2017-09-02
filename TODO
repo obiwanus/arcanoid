@@ -1,5 +1,5 @@
-- Check for winning
-- Change level
+- Start sticky
+- Reset ball to sticky state after change level
 - Ball speed up
 - Have a chance of dropping a buff/debuff
 - Enlarging
@@ -11,6 +11,7 @@
 - Colorful bricks
 - Draw walls
 - Fix the "power ball" problem
+- Check for losing
 - (maybe) try to remove stuttering
 
 
@@ -23,6 +24,8 @@ DONE:
 - Let bricks have hitpoints
 - Fix the multiple collision problem
 - Make a few nice levels
+- Check for winning
+- Change level
 
 1 Sep 2017
 - Add bricks

@@ -41,12 +41,13 @@ void InitGameState(Program_State *state, Pixel_Buffer *screen) {
   main_ball->speed.y = -START_BALL_SPEED;
   main_ball->attached = true;
 
-  state->current_level = 2;
+  state->current_level = 0;
   state->level_initialised = false;
 
   // Init levels
   {
-    state->levels[0].layout =
+    int level = 0;
+    state->levels[level++].layout =
         "           \n"
         " sx xxx xs \n"
         " sx xxx xs \n"
@@ -65,7 +66,7 @@ void InitGameState(Program_State *state, Pixel_Buffer *screen) {
         " sx xxx xs \n"
         " sx xxx xs \n"
         " sssssssss ";
-    state->levels[1].layout =
+    state->levels[level++].layout =
         " \n"
         "sxxxx\n"
         "sxxxxx \n"
@@ -84,7 +85,7 @@ void InitGameState(Program_State *state, Pixel_Buffer *screen) {
         "sxxxxxxxx \n"
         "sxxxxxxxxx \n"
         "ssssssssss ";
-    state->levels[2].layout =
+    state->levels[level++].layout =
         "\n"
         "  s     s  \n"
         "  s     s  \n"
@@ -102,6 +103,8 @@ void InitGameState(Program_State *state, Pixel_Buffer *screen) {
         "x x     x x\n"
         "   ss ss   \n"
         "   ss ss   ";
+
+    assert(level == MAX_LEVELS);
   }
 }
 
@@ -313,6 +316,7 @@ void DrawBricks(Pixel_Buffer *screen, Brick *bricks) {
   for (int i = 0; i < BRICKS_PER_ROW * BRICKS_PER_COL; ++i) {
     if (bricks[i] == Brick_Empty) continue;
 
+    // Draw brick
     u32 color = 0x00BBBBBB;
     if (bricks[i] == Brick_Strong) {
       color = 0x00999999;
@@ -323,10 +327,17 @@ void DrawBricks(Pixel_Buffer *screen, Brick *bricks) {
   }
 }
 
+bool WonLevel(Brick *bricks) {
+  for (int i = 0; i < BRICKS_PER_ROW * BRICKS_PER_COL; ++i) {
+    if (bricks[i] != Brick_Empty) return false;
+  }
+  return true;
+}
+
 bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
                      User_Input *input) {
   Level *level = state->levels + state->current_level;
-  assert(state->current_level < MAX_LEVELS - 1);
+  assert(state->current_level < MAX_LEVELS);
 
   // TODO: is it a good idea to check it every time?
   if (!state->level_initialised) {
@@ -372,6 +383,15 @@ bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
   MoveBalls(screen, state);
 
   DrawBricks(screen, state->bricks);
+
+  if (WonLevel(state->bricks)) {
+    state->current_level++;
+    state->level_initialised = false;
+    if (state->current_level >= MAX_LEVELS) {
+      printf("You won!\n");
+      return false;
+    }
+  }
 
   return true;
 }
