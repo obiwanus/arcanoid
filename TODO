@@ -1,4 +1,3 @@
-- Draw 2 kinds of bricks
 - Collide with bricks
 - Clean up collision code
 - (maybe) try to remove stuttering
@@ -17,6 +16,9 @@
 
 ========================================================================
 DONE:
+
+3 Sep 2017
+- Draw 2 kinds of bricks
 
 1 Sep 2017
 - Add bricks

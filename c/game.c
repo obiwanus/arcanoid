@@ -50,10 +50,11 @@ void DrawPixel(Pixel_Buffer *screen, int x, int y, u32 color) {
   *pixel = color;
 }
 
-void DrawRect(Pixel_Buffer *screen, int left, int top, int width, int height,
-              u32 color) {
-  int right = left + width;
-  int bottom = top + height;
+void DrawRect(Pixel_Buffer *screen, Rect rect, u32 color) {
+  int left = rect.left;
+  int top = rect.top;
+  int right = left + rect.width;
+  int bottom = top + rect.height;
   if (left < 0) left = 0;
   if (top < 0) top = 0;
   if (right > screen->width) right = screen->width;
@@ -91,7 +92,8 @@ void DrawCircle(Pixel_Buffer *screen, float X, float Y, float radius,
 void _DrawBat(Pixel_Buffer *screen, Bat *bat, u32 color) {
   int left = (int)bat->left;
   int top = screen->height - bat->bottom - bat->height;
-  DrawRect(screen, left, top, bat->width, bat->height, color);
+  Rect bat_rect = {left, top, bat->width, bat->height};
+  DrawRect(screen, bat_rect, color);
 }
 
 void EraseBat(Pixel_Buffer *screen, Bat *bat) {
@@ -184,28 +186,42 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
       }
     }
 
+    // Collision with the bricks (brute force)
+    Brick *bricks = state->bricks;
+    for (int i = 0; i < BRICKS_PER_ROW * BRICKS_PER_COL; ++i) {
+      if (bricks[i] == Brick_Empty) continue;
+
+    }
+
     // Redraw
     DrawCircle(screen, ball->x, ball->y, ball->radius, ball->color);
   }
 }
 
-void DrawBricks(Pixel_Buffer *screen, Brick *bricks) {
+Rect GetBrickRect(Pixel_Buffer *screen, int number) {
   const int kPadding = 10;
   const int kBrickWidth = (screen->width - kPadding * 2) / BRICKS_PER_ROW;
   const int kBrickHeight = 20;
 
+  int brick_x = (number % BRICKS_PER_ROW) * kBrickWidth + kPadding;
+  int brick_y = (number / BRICKS_PER_ROW) * kBrickHeight + kPadding;
+
+  Rect result = {brick_x, brick_y, kBrickWidth, kBrickHeight};
+  return result;
+}
+
+void DrawBricks(Pixel_Buffer *screen, Brick *bricks) {
+
   for (int i = 0; i < BRICKS_PER_ROW * BRICKS_PER_COL; ++i) {
-    if (bricks[i] != Brick_Empty) {
-      int brick_x = (i % BRICKS_PER_ROW) * kBrickWidth + kPadding;
-      int brick_y = (i / BRICKS_PER_ROW) * kBrickHeight + kPadding;
-      u32 color = 0x00CCCCCC;
-      if (bricks[i] == Brick_Strong) {
-        color = 0x00BBBBBB;
-      } else if (bricks[i] == Brick_Unbreakable) {
-        color = 0x00CCBBBB;
-      }
-      DrawRect(screen, brick_x, brick_y, kBrickWidth, kBrickHeight, color);
+    if (bricks[i] == Brick_Empty) continue;
+
+    u32 color = 0x00CCCCCC;
+    if (bricks[i] == Brick_Strong) {
+      color = 0x00BBBBBB;
+    } else if (bricks[i] == Brick_Unbreakable) {
+      color = 0x00CCBBBB;
     }
+    DrawRect(screen, GetBrickRect(screen, i), color);
   }
 }
 
