@@ -41,28 +41,67 @@ void InitGameState(Program_State *state, Pixel_Buffer *screen) {
   main_ball->speed.y = -START_BALL_SPEED;
   main_ball->attached = true;
 
-  state->current_level = 0;
+  state->current_level = 2;
   state->level_initialised = false;
 
   // Init levels
   {
     state->levels[0].layout =
-        "xx xxxxx xx\n"
-        "xx xxxxx xx\n"
-        "xx xxxxx xx\n"
-        "xx xxxxx xx\n"
-        "xx xxxxx xx\n"
-        "xx xxxxx xx\n"
-        "xx xxxxx xx";
+        "           \n"
+        " sx xxx xs \n"
+        " sx xxx xs \n"
+        " sx xxx xs \n"
+        " sx xxx xs \n"
+        " sx xxx xs \n"
+        " sx xxx xs \n"
+        " sx xxx xs \n"
+        " sx xxx xs \n"
+        " sx xxx xs \n"
+        " sx xxx xs \n"
+        " sx xxx xs \n"
+        " sx xxx xs \n"
+        " sx xxx xs \n"
+        " sx xxx xs \n"
+        " sx xxx xs \n"
+        " sx xxx xs \n"
+        " sssssssss ";
     state->levels[1].layout =
-        "sxxxxxxxxxs\n"
-        " sxxxxxxxs \n"
-        "  sssssss  ";
+        " \n"
+        "sxxxx\n"
+        "sxxxxx \n"
+        "sxxxxxx \n"
+        "sxxxxxxx \n"
+        "sxxxxxxxx \n"
+        "sxxxxxxx \n"
+        "sxxxxxx \n"
+        "sxxxxx \n"
+        "sxxxx \n"
+        "sxxx \n"
+        "sxxxx \n"
+        "sxxxxx \n"
+        "sxxxxxx \n"
+        "sxxxxxxx \n"
+        "sxxxxxxxx \n"
+        "sxxxxxxxxx \n"
+        "ssssssssss ";
     state->levels[2].layout =
-        "sxxxxxxxxxs\n"
-        " sxxxxxxxs \n"
-        "  sssssss  \n"
-        " s s s s s ";
+        "\n"
+        "  s     s  \n"
+        "  s     s  \n"
+        "   s   s   \n"
+        "   s   s   \n"
+        "  xxxxxxx  \n"
+        "  xxxxxxx  \n"
+        " xxsxxxsxx \n"
+        " xxsxxxsxx \n"
+        "xxxxxxxxxxx\n"
+        "xxxxxxxxxxx\n"
+        "xxxxxxxxxxx\n"
+        "x xxxxxxx x\n"
+        "x x     x x\n"
+        "x x     x x\n"
+        "   ss ss   \n"
+        "   ss ss   ";
   }
 }
 
@@ -274,11 +313,11 @@ void DrawBricks(Pixel_Buffer *screen, Brick *bricks) {
   for (int i = 0; i < BRICKS_PER_ROW * BRICKS_PER_COL; ++i) {
     if (bricks[i] == Brick_Empty) continue;
 
-    u32 color = 0x00CCCCCC;
+    u32 color = 0x00BBBBBB;
     if (bricks[i] == Brick_Strong) {
-      color = 0x00BBBBBB;
+      color = 0x00999999;
     } else if (bricks[i] == Brick_Unbreakable) {
-      color = 0x00CCBBBB;
+      color = 0x00AA8888;
     }
     DrawRect(screen, GetBrickRect(screen, i), color);
   }

@@ -1,5 +1,6 @@
 - Check for winning
 - Change level
+- Ball speed up
 - Have a chance of dropping a buff/debuff
 - Enlarging
 - Shrinking
@@ -9,6 +10,7 @@
 - Shooting
 - Colorful bricks
 - Draw walls
+- Fix the "power ball" problem
 - (maybe) try to remove stuttering
 
 
@@ -20,6 +22,7 @@ DONE:
 - Collide with bricks
 - Let bricks have hitpoints
 - Fix the multiple collision problem
+- Make a few nice levels
 
 1 Sep 2017
 - Add bricks

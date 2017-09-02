@@ -80,7 +80,7 @@ typedef enum Brick {
 #define MAX_BALLS 10
 #define MAX_LEVELS 5
 #define BRICKS_PER_ROW 11
-#define BRICKS_PER_COL 11
+#define BRICKS_PER_COL 20
 
 // TODO: maybe move bricks to level?
 typedef struct Program_State {
