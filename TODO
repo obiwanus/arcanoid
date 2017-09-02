@@ -2,6 +2,8 @@
 - Collide with bricks
 - Clean up collision code
 - (maybe) try to remove stuttering
+- Check for winning
+- Change level
 - Have a chance of dropping a buff/debuff
 - Enlarging
 - Shrinking

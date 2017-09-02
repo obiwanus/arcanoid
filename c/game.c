@@ -34,14 +34,14 @@ void InitGameState(Program_State *state) {
   // Init levels
   {
     state->levels[0].layout =
-        "xxxxxxxxxxx\n"
-        " xxxxxxxxx \n"
-        "  xxxxxxx  ";
+        "sxxxxxxxxxs\n"
+        " sxxxxxxxs \n"
+        "  sssssss  ";
     state->levels[1].layout =
-        "xxxxxxxxxxx\n"
-        " xxxxxxxxx \n"
-        "  xxxxxxx  \n"
-        " x x x x x ";
+        "sxxxxxxxxxs\n"
+        " sxxxxxxxs \n"
+        "  sssssss  \n"
+        " s s s s s ";
   }
 }
 
@@ -190,11 +190,6 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
 }
 
 void DrawBricks(Pixel_Buffer *screen, Brick *bricks) {
-  // for (int y = 0; y < BRICKS_PER_COL; ++y) {
-  //   for (int x = 0; x < BRICKS_PER_ROW; ++x) {
-
-  //   }
-  // }
   const int kPadding = 10;
   const int kBrickWidth = (screen->width - kPadding * 2) / BRICKS_PER_ROW;
   const int kBrickHeight = 20;
@@ -203,7 +198,13 @@ void DrawBricks(Pixel_Buffer *screen, Brick *bricks) {
     if (bricks[i] != Brick_Empty) {
       int brick_x = (i % BRICKS_PER_ROW) * kBrickWidth + kPadding;
       int brick_y = (i / BRICKS_PER_ROW) * kBrickHeight + kPadding;
-      DrawRect(screen, brick_x, brick_y, kBrickWidth, kBrickHeight, 0x00FFFFFF);
+      u32 color = 0x00CCCCCC;
+      if (bricks[i] == Brick_Strong) {
+        color = 0x00BBBBBB;
+      } else if (bricks[i] == Brick_Unbreakable) {
+        color = 0x00CCBBBB;
+      }
+      DrawRect(screen, brick_x, brick_y, kBrickWidth, kBrickHeight, color);
     }
   }
 }
@@ -235,6 +236,8 @@ bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
           state->bricks[brick_num] = Brick_Normal;
         } else if (*b == 'u') {
           state->bricks[brick_num] = Brick_Unbreakable;
+        } else if (*b == 's') {
+          state->bricks[brick_num] = Brick_Strong;
         } else {
           state->bricks[brick_num] = Brick_Empty;
         }

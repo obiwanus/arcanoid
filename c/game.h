@@ -63,6 +63,7 @@ typedef struct Level {
 typedef enum Brick {
   Brick_Empty = 0,
   Brick_Normal,
+  Brick_Strong,
   Brick_Unbreakable,
   Brick__COUNT,
 } Brick;
