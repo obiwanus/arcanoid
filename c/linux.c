@@ -135,6 +135,9 @@ int main(int argc, char *argv[]) {
           if (key == XK_Escape) {
             new_input->buttons[IB_escape] = pressed;
           }
+          if (key == XK_space) {
+            new_input->buttons[IB_space] = pressed;
+          }
           if (key == XK_Up) {
             new_input->buttons[IB_up] = pressed;
           }

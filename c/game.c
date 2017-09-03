@@ -28,6 +28,14 @@ void AttachToBat(Ball *ball, Bat *bat, Pixel_Buffer *screen) {
 
 #define START_BALL_SPEED 5
 
+void ResetBall(Ball *ball) {
+  ball->radius = 8.f;
+  ball->color = 0x00FFFFFF;
+  ball->attached = true;
+  ball->speed.x = START_BALL_SPEED;
+  ball->speed.y = -START_BALL_SPEED;
+}
+
 void InitGameState(Program_State *state, Pixel_Buffer *screen) {
   state->bat.left = 100.0f;
   state->bat.bottom = 20;
@@ -36,13 +44,8 @@ void InitGameState(Program_State *state, Pixel_Buffer *screen) {
   state->bat.color = 0x00FFFFFF;
   state->ball_count = 1;
   Ball *main_ball = &state->balls[0];
-  main_ball->radius = 8.f;
-  main_ball->color = 0x00FFFFFF;
-  main_ball->attached = true;
+  ResetBall(main_ball);
   AttachToBat(main_ball, &state->bat, screen);
-  main_ball->speed.x = START_BALL_SPEED;
-  main_ball->speed.y = -START_BALL_SPEED;
-  main_ball->attached = true;
 
   state->current_level = 0;
   state->level_initialised = false;
@@ -50,6 +53,25 @@ void InitGameState(Program_State *state, Pixel_Buffer *screen) {
   // Init levels
   {
     int level = 0;
+    state->levels[level++].layout =
+        "           \n"
+        " \n"
+        " \n"
+        " \n"
+        " \n"
+        " \n"
+        " \n"
+        " \n"
+        " \n"
+        " \n"
+        " \n"
+        " \n"
+        " \n"
+        " \n"
+        " \n"
+        " \n"
+        " \n"
+        "         x ";
     state->levels[level++].layout =
         "           \n"
         " sx xxx xs \n"
@@ -348,10 +370,19 @@ bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
 
   // TODO: is it a good idea to check it every time?
   if (!state->level_initialised) {
+    // Clear screen
+    Rect screen_rect = {0, 0, screen->width, screen->height};
+    DrawRect(screen, screen_rect, BG_COLOR);
+
     // Clean up all bricks
     for (int i = 0; i < BRICKS_PER_ROW * BRICKS_PER_COL; ++i) {
       state->bricks[i] = Brick_Empty;
     }
+
+    // Reset ball to the attached state. Remove other balls
+    state->ball_count = 1;
+    ResetBall(&state->balls[0]);
+    AttachToBat(&state->balls[0], &state->bat, screen);
 
     // Init new bricks
     int brick_x = 0, brick_y = 0;

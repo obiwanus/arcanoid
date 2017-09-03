@@ -1,6 +1,3 @@
-- Release ball
-- Reset ball to sticky state after change level
-- Ball speed up
 - Have a chance of dropping a buff/debuff
 - Enlarging
 - Shrinking
@@ -8,6 +5,7 @@
 - Multi ball
 - Power ball
 - Shooting
+- Ball speed up
 - Colorful bricks
 - Draw walls
 - Fix the "power ball" problem
@@ -17,6 +15,10 @@
 
 ========================================================================
 DONE:
+
+4 Sep 2017
+- Reset ball to sticky state after change level
+- Release ball
 
 3 Sep 2017
 - Draw 2 kinds of bricks
