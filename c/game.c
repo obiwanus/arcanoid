@@ -1,5 +1,9 @@
-#include <assert.h>
 #include "game.h"
+
+void fatal_error(char *string) {
+  printf("%s\n", string);
+  assert(0);
+}
 
 int Abs(int x) {
   if (x < 0) return -x;
@@ -22,8 +26,7 @@ bool ButtonWasDown(User_Input *input, Input_Button button) {
 
 void AttachToBat(Ball *ball, Bat *bat, Pixel_Buffer *screen) {
   ball->x = bat->left + bat->width / 2 + 5;
-  ball->y =
-      screen->height - (bat->bottom + bat->height + ball->radius / 2) - 5;
+  ball->y = screen->height - (bat->bottom + bat->height + ball->radius / 2) - 5;
 }
 
 #define START_BALL_SPEED 5
@@ -37,6 +40,8 @@ void ResetBall(Ball *ball) {
 }
 
 void InitGameState(Program_State *state, Pixel_Buffer *screen) {
+  srand((unsigned)LinuxGetWallClock());
+
   state->bat.left = 100.0f;
   state->bat.bottom = 20;
   state->bat.width = 70;
@@ -49,6 +54,11 @@ void InitGameState(Program_State *state, Pixel_Buffer *screen) {
 
   state->current_level = 0;
   state->level_initialised = false;
+
+  // Init buffs
+  for (int i = 0; i < MAX_BUFFS; ++i) {
+    state->buffs[i].type = Buff_Inactive;
+  }
 
   // Init levels
   {
@@ -311,6 +321,7 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
                          top <= ball->y && ball->y <= bottom);
         if (!collides) continue;
 
+        // Hit the brick
         if (brick == Brick_Strong) {
           bricks[i] = Brick_Normal;
         } else if (brick == Brick_Normal) {
@@ -319,25 +330,108 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
           DrawRect(screen, brick_rect, BG_COLOR);
         }
 
-        float ldist = FAbs(left - ball->x);
-        float rdist = FAbs(right - ball->x);
-        float tdist = FAbs(top - ball->y);
-        float bdist = FAbs(bottom - ball->y);
+        // Reflect the ball
+        {
+          float ldist = FAbs(left - ball->x);
+          float rdist = FAbs(right - ball->x);
+          float tdist = FAbs(top - ball->y);
+          float bdist = FAbs(bottom - ball->y);
 
-        if (ldist + rdist < tdist + bdist) {
-          ball->x = (ldist < rdist) ? left : right;
-          ball->speed.x =
-              (ldist < rdist) ? -FAbs(ball->speed.x) : FAbs(ball->speed.x);
-        } else {
-          ball->y = (tdist < bdist) ? top : bottom;
-          ball->speed.y =
-              (tdist < bdist) ? -FAbs(ball->speed.y) : FAbs(ball->speed.y);
+          if (ldist + rdist < tdist + bdist) {
+            // ball->x = (ldist < rdist) ? left : right;
+            ball->speed.x =
+                (ldist < rdist) ? -FAbs(ball->speed.x) : FAbs(ball->speed.x);
+          } else {
+            // ball->y = (tdist < bdist) ? top : bottom;
+            ball->speed.y =
+                (tdist < bdist) ? -FAbs(ball->speed.y) : FAbs(ball->speed.y);
+          }
         }
+
+        // Drop buffs/debuffs
+        {
+          const int kChance = 3;  // percent
+          if ((rand() % 100) < kChance && state->active_buffs < MAX_BUFFS) {
+            state->active_buffs++;
+            int next_available_buff = -1;
+            for (int i = 0; i < MAX_BUFFS; ++i) {
+              if (state->buffs[i].type == Buff_Inactive) {
+                next_available_buff = i;
+                break;
+              }
+            }
+            assert(next_available_buff >= 0);
+            Buff *buff = state->buffs + next_available_buff;
+
+            // Init new buff
+            buff->type = (Buff_Type)((rand() % (Buff__COUNT - 1)) + 1);
+            buff->position = V2(brick_rect.left, brick_rect.top);
+          }
+        }
+
+        break;  // don't collide with other bricks
       }
     }
 
     // Redraw
     DrawCircle(screen, ball->x, ball->y, ball->radius, ball->color);
+  }
+}
+
+void MoveBuffs(Pixel_Buffer *screen, Program_State *state) {
+  if (state->active_buffs < 1) return;
+
+  const int kBuffWidth = 40;
+  const int kBuffHeight = 15;
+  const float kBuffSpeed = 1.5f;
+
+  int active_seen = 0;
+  for (int i = 0; i < MAX_BUFFS; ++i) {
+    Buff *buff = state->buffs + i;
+    if (buff->type == Buff_Inactive) continue;
+
+    Rect buff_rect = {(int)buff->position.x, (int)buff->position.y, kBuffWidth,
+                      kBuffHeight};
+
+    // Erase
+    DrawRect(screen, buff_rect, BG_COLOR);
+
+    u32 color = 0x00FFFFFF;
+    switch (buff->type) {
+      case Buff_Enlarge: {
+        color = 0x00F3B191;
+      } break;
+      case Buff_Shrink: {
+        color = 0x0013B1F1;
+      } break;
+      case Buff_Sticky: {
+        color = 0x00F311F1;
+      } break;
+      case Buff_MultiBall: {
+        color = 0x00AA0100;
+      } break;
+      case Buff_PowerBall: {
+        color = 0x0033F199;
+      } break;
+      case Buff_SlowBall: {
+        color = 0x004433FF;
+      } break;
+      case Buff_Gun: {
+        color = 0x0088FF22;
+      } break;
+      case Buff_BottomWall: {
+        color = 0x0099D622;
+      } break;
+      default: { fatal_error("Unknown buff type"); } break;
+    }
+
+    buff->position.y += kBuffSpeed;
+    buff_rect.top = (int)buff->position.y;
+
+    DrawRect(screen, buff_rect, color);
+
+    ++active_seen;
+    if (state->active_buffs <= active_seen) return;
   }
 }
 
@@ -356,7 +450,7 @@ void DrawBricks(Pixel_Buffer *screen, Brick *bricks) {
   }
 }
 
-bool WonLevel(Brick *bricks) {
+bool LevelComplete(Brick *bricks) {
   for (int i = 0; i < BRICKS_PER_ROW * BRICKS_PER_COL; ++i) {
     if (bricks[i] != Brick_Empty) return false;
   }
@@ -425,10 +519,11 @@ bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
 
   MoveBat(screen, bat, input);
   MoveBalls(screen, state);
+  MoveBuffs(screen, state);
 
   DrawBricks(screen, state->bricks);
 
-  if (WonLevel(state->bricks)) {
+  if (LevelComplete(state->bricks)) {
     state->current_level++;
     state->level_initialised = false;
     if (state->current_level >= MAX_LEVELS) {

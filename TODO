@@ -1,4 +1,6 @@
-- Have a chance of dropping a buff/debuff
+
+- Consume/destroy buffs
+- Fix horizontal reflection
 - Enlarging
 - Shrinking
 - Sticky ball
@@ -19,6 +21,7 @@ DONE:
 4 Sep 2017
 - Reset ball to sticky state after change level
 - Release ball
+- Have a chance of dropping a buff/debuff
 
 3 Sep 2017
 - Draw 2 kinds of bricks

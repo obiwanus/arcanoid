@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <assert.h>
+#include <time.h>
 
 #include "vectors.h"
 
@@ -77,25 +79,50 @@ typedef enum Brick {
   Brick__COUNT,
 } Brick;
 
+typedef enum Buff_Type {
+  Buff_Inactive = 0,
+  Buff_Enlarge,
+  Buff_Shrink,
+  Buff_Sticky,
+  Buff_MultiBall,
+  Buff_PowerBall,
+  Buff_SlowBall,
+  Buff_Gun,
+  Buff_BottomWall,
+  Buff__COUNT,
+} Buff_Type;
+
+typedef struct Buff {
+  Buff_Type type;
+  v2 position;
+} Buff;
+
 #define MAX_BALLS 10
 #define MAX_LEVELS 4
+#define MAX_BUFFS 10
 #define BRICKS_PER_ROW 11
 #define BRICKS_PER_COL 20
 
 // TODO: maybe move bricks to level?
 typedef struct Program_State {
-  Ball balls[MAX_BALLS];
-  Bat bat;
-  int ball_count;
-  Level levels[MAX_LEVELS];
-  int current_level;
   bool level_initialised;
+  int ball_count;
+  int current_level;
+  int active_buffs;
+  Bat bat;
+  Level levels[MAX_LEVELS];
+  Ball balls[MAX_BALLS];
   Brick bricks[BRICKS_PER_COL * BRICKS_PER_ROW];
+  Buff buffs[MAX_BUFFS];
 } Program_State;
 
 bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
                      User_Input *input);
 
 void InitGameState(Program_State *state, Pixel_Buffer *screen);
+
+u64 LinuxGetWallClock();
+
+void fatal_error(char *string);
 
 #endif  // _GAME_H_
