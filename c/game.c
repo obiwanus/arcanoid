@@ -44,7 +44,7 @@ void InitGameState(Program_State *state, Pixel_Buffer *screen) {
 
   state->bat.left = 100.0f;
   state->bat.bottom = 20;
-  state->bat.width = 70;
+  state->bat.width = DEFAULT_BAT_WIDTH;
   state->bat.height = 13;
   state->bat.color = 0x00FFFFFF;
   state->ball_count = 1;
@@ -56,8 +56,12 @@ void InitGameState(Program_State *state, Pixel_Buffer *screen) {
   state->level_initialised = false;
 
   // Init buffs
+  state->falling_buffs = 0;
   for (int i = 0; i < MAX_BUFFS; ++i) {
     state->buffs[i].type = Buff_Inactive;
+  }
+  for (int i = 0; i < Buff__COUNT; ++i) {
+    state->active_buffs[i] = 0;
   }
 
   // Init levels
@@ -202,12 +206,30 @@ void DrawBat(Pixel_Buffer *screen, Bat *bat) {
   _DrawBat(screen, bat, bat->color);
 }
 
+bool BuffActivated(Program_State *state, Buff_Type type) {
+  return state->active_buffs[type] == BUFF_TTL;
+}
+
+bool BuffDeactivated(Program_State *state, Buff_Type type) {
+  return state->active_buffs[type] == 1;
+}
+
 #define SCREEN_PADDING 2
 #define BAT_MOVE_STEP 6.0f
 
-void MoveBat(Pixel_Buffer *screen, Bat *bat, User_Input *input) {
+void MoveBat(Pixel_Buffer *screen, Program_State *state, User_Input *input) {
+  Bat *bat = &state->bat;
+
   // Erase first
   EraseBat(screen, bat);
+
+  // Check buffs
+  if (BuffActivated(state, Buff_Enlarge)) {
+    bat->width = 2 * DEFAULT_BAT_WIDTH;
+  }
+  if (BuffDeactivated(state, Buff_Enlarge)) {
+    bat->width = DEFAULT_BAT_WIDTH;
+  }
 
   // Move
   float move = 0;
@@ -368,8 +390,8 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
         // Drop buffs/debuffs
         {
           const int kChance = 15;  // percent
-          if ((rand() % 100) < kChance && state->active_buffs < MAX_BUFFS) {
-            state->active_buffs++;
+          if ((rand() % 100) < kChance && state->falling_buffs < MAX_BUFFS) {
+            state->falling_buffs++;
             int next_available_buff = -1;
             for (int i = 0; i < MAX_BUFFS; ++i) {
               if (state->buffs[i].type == Buff_Inactive) {
@@ -396,7 +418,7 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
 }
 
 void MoveBuffs(Pixel_Buffer *screen, Program_State *state) {
-  if (state->active_buffs < 1) return;
+  if (state->falling_buffs < 1) return;
 
   const int kBuffWidth = 40;
   const int kBuffHeight = 15;
@@ -404,12 +426,12 @@ void MoveBuffs(Pixel_Buffer *screen, Program_State *state) {
 
   Rect bat_rect = GetBatRect(screen, &state->bat);
 
-  int active_seen = 0;
+  int falling_seen = 0;
   for (int i = 0; i < MAX_BUFFS; ++i) {
     Buff *buff = state->buffs + i;
     if (buff->type == Buff_Inactive) continue;
 
-    ++active_seen;
+    ++falling_seen;
 
     Rect buff_rect = {(int)buff->position.x, (int)buff->position.y, kBuffWidth,
                       kBuffHeight};
@@ -452,20 +474,24 @@ void MoveBuffs(Pixel_Buffer *screen, Program_State *state) {
     // Destroy if reaches the bottom
     if (buff->position.y > screen->height) {
       buff->type = Buff_Inactive;
-      state->active_buffs--;
+      state->falling_buffs--;
       continue;
     }
 
-    // Consume if touches the bat
     if (RectsIntersect(bat_rect, buff_rect)) {
+      // Consume if touches the bat
       buff->type = Buff_Inactive;
-      state->active_buffs--;
+      state->falling_buffs--;
+
+      // Activate buff
+      state->active_buffs[buff->type] = BUFF_TTL;
+
       continue;
     }
 
     DrawRect(screen, buff_rect, color);
 
-    if (state->active_buffs <= active_seen) return;
+    if (state->falling_buffs <= falling_seen) return;
   }
 }
 
@@ -505,6 +531,11 @@ bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
     // Clean up all bricks
     for (int i = 0; i < BRICKS_PER_ROW * BRICKS_PER_COL; ++i) {
       state->bricks[i] = Brick_Empty;
+    }
+
+    // Clean up all buffs
+    for (int i = 0; i < MAX_BUFFS; ++i) {
+      state->buffs[i].type = Buff_Inactive;
     }
 
     // Reset ball to the attached state. Remove other balls
@@ -549,9 +580,14 @@ bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
     }
   }
 
-  Bat *bat = &state->bat;
+  // Decrement all buffs
+  for (int i = 0; i < Buff__COUNT; ++i) {
+    if (state->active_buffs[i] > 0) {
+      state->active_buffs[i]--;
+    }
+  }
 
-  MoveBat(screen, bat, input);
+  MoveBat(screen, state, input);
   MoveBalls(screen, state);
 
   DrawBricks(screen, state->bricks);

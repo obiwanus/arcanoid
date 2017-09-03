@@ -100,20 +100,23 @@ typedef struct Buff {
 #define MAX_BALLS 10
 #define MAX_LEVELS 4
 #define MAX_BUFFS 10
+#define BUFF_TTL 15 * 60  // in frames
 #define BRICKS_PER_ROW 11
 #define BRICKS_PER_COL 20
+#define DEFAULT_BAT_WIDTH 70
 
 // TODO: maybe move bricks to level?
 typedef struct Program_State {
   bool level_initialised;
   int ball_count;
   int current_level;
-  int active_buffs;
+  int falling_buffs;
   Bat bat;
   Level levels[MAX_LEVELS];
   Ball balls[MAX_BALLS];
   Brick bricks[BRICKS_PER_COL * BRICKS_PER_ROW];
   Buff buffs[MAX_BUFFS];
+  int active_buffs[Buff__COUNT];  // stores time to live
 } Program_State;
 
 bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
