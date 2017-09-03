@@ -242,6 +242,23 @@ Rect GetBrickRect(Pixel_Buffer *screen, int number) {
   return result;
 }
 
+Rect GetBatRect(Pixel_Buffer *screen, Bat *bat) {
+  Rect result = {(int)bat->left, screen->height - bat->bottom - bat->height,
+                 bat->width, bat->height};
+
+  return result;
+}
+
+bool RectsIntersect(Rect r1, Rect r2) {
+  int r1_right = r1.left + r1.width;
+  int r2_right = r2.left + r2.width;
+  int r1_bottom = r1.top + r1.height;
+  int r2_bottom = r2.top + r2.height;
+  bool miss = (r1.left > r2_right || r2.left > r1_right || r1.top > r2_bottom ||
+               r2.top > r1_bottom);
+  return !miss;
+}
+
 void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
   for (int i = 0; i < state->ball_count; ++i) {
     Ball *ball = state->balls + i;
@@ -350,7 +367,7 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
 
         // Drop buffs/debuffs
         {
-          const int kChance = 3;  // percent
+          const int kChance = 15;  // percent
           if ((rand() % 100) < kChance && state->active_buffs < MAX_BUFFS) {
             state->active_buffs++;
             int next_available_buff = -1;
@@ -385,10 +402,14 @@ void MoveBuffs(Pixel_Buffer *screen, Program_State *state) {
   const int kBuffHeight = 15;
   const float kBuffSpeed = 1.5f;
 
+  Rect bat_rect = GetBatRect(screen, &state->bat);
+
   int active_seen = 0;
   for (int i = 0; i < MAX_BUFFS; ++i) {
     Buff *buff = state->buffs + i;
     if (buff->type == Buff_Inactive) continue;
+
+    ++active_seen;
 
     Rect buff_rect = {(int)buff->position.x, (int)buff->position.y, kBuffWidth,
                       kBuffHeight};
@@ -428,9 +449,22 @@ void MoveBuffs(Pixel_Buffer *screen, Program_State *state) {
     buff->position.y += kBuffSpeed;
     buff_rect.top = (int)buff->position.y;
 
+    // Destroy if reaches the bottom
+    if (buff->position.y > screen->height) {
+      buff->type = Buff_Inactive;
+      state->active_buffs--;
+      continue;
+    }
+
+    // Consume if touches the bat
+    if (RectsIntersect(bat_rect, buff_rect)) {
+      buff->type = Buff_Inactive;
+      state->active_buffs--;
+      continue;
+    }
+
     DrawRect(screen, buff_rect, color);
 
-    ++active_seen;
     if (state->active_buffs <= active_seen) return;
   }
 }
@@ -519,9 +553,10 @@ bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
 
   MoveBat(screen, bat, input);
   MoveBalls(screen, state);
-  MoveBuffs(screen, state);
 
   DrawBricks(screen, state->bricks);
+
+  MoveBuffs(screen, state);
 
   if (LevelComplete(state->bricks)) {
     state->current_level++;
