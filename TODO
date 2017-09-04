@@ -1,6 +1,5 @@
 
 - Fix horizontal reflection
-- Enlarging
 - Shrinking
 - Sticky ball
 - Multi ball
@@ -9,7 +8,6 @@
 - Ball speed up
 - Colorful bricks
 - Draw walls
-- Fix the "power ball" problem
 - Check for losing
 - (maybe) try to remove stuttering
 
@@ -17,11 +15,15 @@
 ========================================================================
 DONE:
 
+5 Sep 2017
+- Enlarging
+
 4 Sep 2017
 - Reset ball to sticky state after change level
 - Release ball
 - Have a chance of dropping a buff/debuff
 - Consume/destroy buffs
+- Fix the "power ball" problem
 
 3 Sep 2017
 - Draw 2 kinds of bricks

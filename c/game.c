@@ -191,19 +191,11 @@ void DrawCircle(Pixel_Buffer *screen, float X, float Y, float radius,
   }
 }
 
-void _DrawBat(Pixel_Buffer *screen, Bat *bat, u32 color) {
+void DrawBat(Pixel_Buffer *screen, Bat *bat, u32 color) {
   int left = (int)bat->left;
   int top = screen->height - bat->bottom - bat->height;
   Rect bat_rect = {left, top, bat->width, bat->height};
   DrawRect(screen, bat_rect, color);
-}
-
-void EraseBat(Pixel_Buffer *screen, Bat *bat) {
-  _DrawBat(screen, bat, BG_COLOR);
-}
-
-void DrawBat(Pixel_Buffer *screen, Bat *bat) {
-  _DrawBat(screen, bat, bat->color);
 }
 
 bool BuffActivated(Program_State *state, Buff_Type type) {
@@ -214,21 +206,29 @@ bool BuffDeactivated(Program_State *state, Buff_Type type) {
   return state->active_buffs[type] == 1;
 }
 
-#define SCREEN_PADDING 2
-#define BAT_MOVE_STEP 6.0f
-
 void MoveBat(Pixel_Buffer *screen, Program_State *state, User_Input *input) {
   Bat *bat = &state->bat;
 
   // Erase first
-  EraseBat(screen, bat);
+  DrawBat(screen, bat, BG_COLOR);
 
   // Check buffs
-  if (BuffActivated(state, Buff_Enlarge)) {
-    bat->width = 2 * DEFAULT_BAT_WIDTH;
-  }
-  if (BuffDeactivated(state, Buff_Enlarge)) {
-    bat->width = DEFAULT_BAT_WIDTH;
+  {
+    if (BuffActivated(state, Buff_Enlarge)) {
+      bat->width = 2 * DEFAULT_BAT_WIDTH;
+      bat->left -= DEFAULT_BAT_WIDTH / 2;
+      if (bat->left < SCREEN_PADDING) {
+        bat->left = SCREEN_PADDING;
+      }
+    }
+    if (BuffDeactivated(state, Buff_Enlarge)) {
+      bat->width = DEFAULT_BAT_WIDTH;
+      bat->left += DEFAULT_BAT_WIDTH / 2;
+      const int kMaxLeft = screen->width - SCREEN_PADDING - bat->width;
+      if (bat->left > kMaxLeft) {
+        bat->left = kMaxLeft;
+      }
+    }
   }
 
   // Move
@@ -249,7 +249,7 @@ void MoveBat(Pixel_Buffer *screen, Program_State *state, User_Input *input) {
   }
 
   // Redraw
-  DrawBat(screen, bat);
+  DrawBat(screen, bat, bat->color);
 }
 
 Rect GetBrickRect(Pixel_Buffer *screen, int number) {
@@ -479,12 +479,17 @@ void MoveBuffs(Pixel_Buffer *screen, Program_State *state) {
     }
 
     if (RectsIntersect(bat_rect, buff_rect)) {
-      // Consume if touches the bat
+      // Activate buff
+      if (state->active_buffs[buff->type] > 0) {
+        // If already active, don't activate again
+        state->active_buffs[buff->type] = BUFF_TTL - 1;
+      } else {
+        state->active_buffs[buff->type] = BUFF_TTL;
+      }
+
+      // Consume
       buff->type = Buff_Inactive;
       state->falling_buffs--;
-
-      // Activate buff
-      state->active_buffs[buff->type] = BUFF_TTL;
 
       continue;
     }
@@ -580,18 +585,17 @@ bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
     }
   }
 
+  MoveBat(screen, state, input);
+  MoveBalls(screen, state);
+
+  DrawBricks(screen, state->bricks);
+
   // Decrement all buffs
   for (int i = 0; i < Buff__COUNT; ++i) {
     if (state->active_buffs[i] > 0) {
       state->active_buffs[i]--;
     }
   }
-
-  MoveBat(screen, state, input);
-  MoveBalls(screen, state);
-
-  DrawBricks(screen, state->bricks);
-
   MoveBuffs(screen, state);
 
   if (LevelComplete(state->bricks)) {
