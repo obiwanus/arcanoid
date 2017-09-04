@@ -29,7 +29,6 @@ void AttachToBat(Ball *ball, Bat *bat, Pixel_Buffer *screen) {
   ball->y = screen->height - (bat->bottom + bat->height + ball->radius / 2) - 5;
 }
 
-#define START_BALL_SPEED 5
 
 void ResetBall(Ball *ball, Bat *bat) {
   ball->active = true;
@@ -326,6 +325,13 @@ void MoveBat(Pixel_Buffer *screen, Program_State *state, User_Input *input) {
         state->ball_count += 2;
       }
     }
+    if (BuffActivated(state, Buff_SlowBall)) {
+      state->active_buffs[Buff_SlowBall] = 0;  // one time buff
+      for (int i = 0; i < MAX_BALLS; ++i) {
+        Ball *ball = state->balls + i;
+        ball->speed = Scale(Normalize(ball->speed), START_BALL_SPEED);
+      }
+    }
   }
 
   // Move
@@ -496,7 +502,7 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
 
         // Drop buffs/debuffs
         {
-          const int kChance = 15;  // percent
+          const int kChance = 25;  // percent
           if ((rand() % 100) < kChance && state->falling_buffs < MAX_BUFFS) {
             state->falling_buffs++;
             int next_available_buff = -1;

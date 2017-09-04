@@ -87,11 +87,11 @@ typedef enum Buff_Type {
   Buff_Shrink,
   Buff_Sticky,
   Buff_MultiBall,
-  Buff__COUNT,
   Buff_PowerBall,
   Buff_SlowBall,
   Buff_Gun,
   Buff_BottomWall,
+  Buff__COUNT,
 } Buff_Type;
 
 typedef struct Buff {
@@ -102,12 +102,13 @@ typedef struct Buff {
 #define MAX_BALLS 10
 #define MAX_LEVELS 4
 #define MAX_BUFFS 10
-#define BUFF_TTL 15 * 60  // in frames
+#define BUFF_TTL 60 * 60  // in frames
 #define BRICKS_PER_ROW 11
 #define BRICKS_PER_COL 20
 #define SCREEN_PADDING 2
 #define DEFAULT_BAT_WIDTH 70
 #define BAT_MOVE_STEP 6.0f
+#define START_BALL_SPEED 5
 
 // TODO: maybe move bricks to level?
 typedef struct Program_State {
