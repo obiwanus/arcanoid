@@ -1,7 +1,5 @@
 
 - Fix horizontal reflection
-- Sticky ball
-- Multi ball
 - Power ball
 - Shooting
 - Ball speed up
@@ -17,6 +15,8 @@ DONE:
 5 Sep 2017
 - Enlarging
 - Shrinking
+- Sticky ball
+- Multi ball
 
 4 Sep 2017
 - Reset ball to sticky state after change level

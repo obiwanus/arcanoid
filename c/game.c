@@ -32,6 +32,7 @@ void AttachToBat(Ball *ball, Bat *bat, Pixel_Buffer *screen) {
 #define START_BALL_SPEED 5
 
 void ResetBall(Ball *ball, Bat *bat) {
+  ball->active = true;
   ball->radius = 8.f;
   ball->color = 0x00FFFFFF;
   ball->attached = true;
@@ -40,21 +41,66 @@ void ResetBall(Ball *ball, Bat *bat) {
   ball->speed.y = -START_BALL_SPEED;
 }
 
-void InitGameState(Program_State *state, Pixel_Buffer *screen) {
-  srand((unsigned)LinuxGetWallClock());
-
+void InitLevel(Program_State *state, Pixel_Buffer *screen, int level) {
   state->bat.left = 100.0f;
   state->bat.bottom = 20;
   state->bat.width = DEFAULT_BAT_WIDTH;
   state->bat.height = 13;
   state->bat.color = 0x00FFFFFF;
   state->ball_count = 1;
+
+  for (int i = 0; i < MAX_BALLS; ++i) {
+    Ball *ball = state->balls + i;
+    ResetBall(ball, &state->bat);
+    ball->active = 0;
+    ball->attached = 0;
+  }
+
   Ball *main_ball = &state->balls[0];
   ResetBall(main_ball, &state->bat);
   AttachToBat(main_ball, &state->bat, screen);
 
-  state->current_level = 0;
-  state->level_initialised = false;
+  state->current_level = level;
+  state->level_initialised = true;
+
+  // Clean up all bricks
+  for (int i = 0; i < BRICKS_PER_ROW * BRICKS_PER_COL; ++i) {
+    state->bricks[i] = Brick_Empty;
+  }
+
+  // Clean up all buffs
+  for (int i = 0; i < MAX_BUFFS; ++i) {
+    state->buffs[i].type = Buff_Inactive;
+  }
+
+  // Init new bricks
+  int brick_x = 0, brick_y = 0;
+  char *b = state->levels[level].layout;
+  while (*b != '\0') {
+    if (*b == '\n') {
+      brick_x = 0;
+      brick_y++;
+    } else {
+      assert(brick_x < BRICKS_PER_ROW);
+      assert(brick_y < BRICKS_PER_COL);
+      int brick_num = brick_y * BRICKS_PER_ROW + brick_x;
+      if (*b == 'x') {
+        state->bricks[brick_num] = Brick_Normal;
+      } else if (*b == 'u') {
+        state->bricks[brick_num] = Brick_Unbreakable;
+      } else if (*b == 's') {
+        state->bricks[brick_num] = Brick_Strong;
+      } else {
+        state->bricks[brick_num] = Brick_Empty;
+      }
+      brick_x++;
+    }
+    b++;
+  }
+}
+
+void InitGameState(Program_State *state, Pixel_Buffer *screen) {
+  srand((unsigned)LinuxGetWallClock());
 
   // Init buffs
   state->falling_buffs = 0;
@@ -65,7 +111,7 @@ void InitGameState(Program_State *state, Pixel_Buffer *screen) {
     state->active_buffs[i] = 0;
   }
 
-  // Init levels
+  // Create levels
   {
     int level = 0;
     state->levels[level++].layout =
@@ -146,6 +192,8 @@ void InitGameState(Program_State *state, Pixel_Buffer *screen) {
 
     assert(level == MAX_LEVELS);
   }
+
+  InitLevel(state, screen, 0);
 }
 
 void DrawPixel(Pixel_Buffer *screen, int x, int y, u32 color) {
@@ -211,6 +259,15 @@ bool BuffIsActive(Program_State *state, Buff_Type type) {
   return state->active_buffs[type] > 0;
 }
 
+Ball *GetFirstBall(Program_State *state, bool is_active) {
+  for (int i = 0; i < MAX_BALLS; ++i) {
+    if (state->balls[i].active == is_active) {
+      return &state->balls[i];
+    }
+  }
+  return NULL;
+}
+
 void MoveBat(Pixel_Buffer *screen, Program_State *state, User_Input *input) {
   Bat *bat = &state->bat;
 
@@ -250,6 +307,28 @@ void MoveBat(Pixel_Buffer *screen, Program_State *state, User_Input *input) {
     if (BuffDeactivated(state, Buff_Sticky)) {
       for (int i = 0; i < MAX_BALLS; ++i) {
         state->balls[i].attached = false;
+      }
+    }
+    // Only activate multi ball once
+    if (BuffActivated(state, Buff_MultiBall)) {
+      state->active_buffs[Buff_MultiBall] = 0;  // deactivate immediately
+      if (state->ball_count < MAX_BALLS - 2) {
+        Ball *ball = GetFirstBall(state, true);  // get active ball
+        assert(ball != NULL);
+        Ball *left_ball = GetFirstBall(state, false);
+        assert(left_ball != NULL);
+        *left_ball = *ball;
+        Ball *right_ball = GetFirstBall(state, false);
+        assert(right_ball != NULL);
+        *right_ball = *ball;
+        const int kSpeedModifier = -10;
+        left_ball->speed.x -= kSpeedModifier;
+        right_ball->speed.x += kSpeedModifier;
+        left_ball->speed =
+            Scale(Normalize(left_ball->speed), Length(ball->speed));
+        right_ball->speed =
+            Scale(Normalize(right_ball->speed), Length(ball->speed));
+        state->ball_count += 2;
       }
     }
   }
@@ -305,8 +384,14 @@ bool RectsIntersect(Rect r1, Rect r2) {
 }
 
 void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
-  for (int i = 0; i < state->ball_count; ++i) {
+  int balls_seen = 0;
+  for (int i = 0; i < MAX_BALLS; ++i) {
+    if (balls_seen >= state->ball_count) break;
+
     Ball *ball = state->balls + i;
+    if (!ball->active) continue;
+
+    balls_seen++;
 
     // Erase
     DrawCircle(screen, ball->x, ball->y, ball->radius, BG_COLOR);
@@ -551,7 +636,6 @@ bool LevelComplete(Brick *bricks) {
 
 bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
                      User_Input *input) {
-  Level *level = state->levels + state->current_level;
   assert(state->current_level < MAX_LEVELS);
 
   // TODO: is it a good idea to check it every time?
@@ -560,46 +644,7 @@ bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
     Rect screen_rect = {0, 0, screen->width, screen->height};
     DrawRect(screen, screen_rect, BG_COLOR);
 
-    // Clean up all bricks
-    for (int i = 0; i < BRICKS_PER_ROW * BRICKS_PER_COL; ++i) {
-      state->bricks[i] = Brick_Empty;
-    }
-
-    // Clean up all buffs
-    for (int i = 0; i < MAX_BUFFS; ++i) {
-      state->buffs[i].type = Buff_Inactive;
-    }
-
-    // Reset ball to the attached state. Remove other balls
-    state->ball_count = 1;
-    ResetBall(&state->balls[0], &state->bat);
-    AttachToBat(&state->balls[0], &state->bat, screen);
-
-    // Init new bricks
-    int brick_x = 0, brick_y = 0;
-    char *b = level->layout;
-    while (*b != '\0') {
-      if (*b == '\n') {
-        brick_x = 0;
-        brick_y++;
-      } else {
-        assert(brick_x < BRICKS_PER_ROW);
-        assert(brick_y < BRICKS_PER_COL);
-        int brick_num = brick_y * BRICKS_PER_ROW + brick_x;
-        if (*b == 'x') {
-          state->bricks[brick_num] = Brick_Normal;
-        } else if (*b == 'u') {
-          state->bricks[brick_num] = Brick_Unbreakable;
-        } else if (*b == 's') {
-          state->bricks[brick_num] = Brick_Strong;
-        } else {
-          state->bricks[brick_num] = Brick_Empty;
-        }
-        brick_x++;
-      }
-      b++;
-    }
-    state->level_initialised = true;
+    InitLevel(state, screen, state->current_level);
   }
 
   if (ButtonIsDown(input, IB_escape)) {
@@ -607,7 +652,7 @@ bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
   }
 
   if (ButtonWasDown(input, IB_space)) {
-    for (int i = 0; i < state->ball_count; ++i) {
+    for (int i = 0; i < MAX_BALLS; ++i) {
       state->balls[i].attached = false;
     }
   }

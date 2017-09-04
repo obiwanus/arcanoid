@@ -26,3 +26,18 @@ v2 Lerp(const v2 a, const v2 b, float t) {
 v2 Scale(const v2 a, const float value) {
   return V2(value * a.x, value * a.y);
 }
+
+v2 OrthoNormalV2(const v2 a) {
+  v2 result = {a.y / a.x, -1};
+  return Normalize(result);
+}
+
+v2 Add(const v2 a, const v2 b) {
+  v2 result = {a.x + b.x, a.y + b.y};
+  return result;
+}
+
+v2 Neg(const v2 a) {
+  v2 result = {-a.x, -a.y};
+  return result;
+}
