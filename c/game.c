@@ -69,8 +69,12 @@ void InitLevel(Program_State *state, Pixel_Buffer *screen, int level) {
   }
 
   // Clean up all buffs
+  state->falling_buffs = 0;
   for (int i = 0; i < MAX_BUFFS; ++i) {
     state->buffs[i].type = Buff_Inactive;
+  }
+  for (int i = 0; i < Buff__COUNT; ++i) {
+    state->active_buffs[i] = 0;
   }
 
   // Init new bricks
@@ -101,15 +105,6 @@ void InitLevel(Program_State *state, Pixel_Buffer *screen, int level) {
 
 void InitGameState(Program_State *state, Pixel_Buffer *screen) {
   srand((unsigned)LinuxGetWallClock());
-
-  // Init buffs
-  state->falling_buffs = 0;
-  for (int i = 0; i < MAX_BUFFS; ++i) {
-    state->buffs[i].type = Buff_Inactive;
-  }
-  for (int i = 0; i < Buff__COUNT; ++i) {
-    state->active_buffs[i] = 0;
-  }
 
   // Create levels
   {

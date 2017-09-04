@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
   // Main loop
   g_running = true;
 
-  int target_fps = 120;
+  int target_fps = 60;
   float target_nspf = 1.0e9f / (float)target_fps;  // Target ms per frame
   u64 last_timestamp = LinuxGetWallClock();
 
