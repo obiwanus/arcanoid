@@ -45,6 +45,7 @@ void InitLevel(Program_State *state, Pixel_Buffer *screen, int level) {
   state->bat.width = DEFAULT_BAT_WIDTH;
   state->bat.height = 13;
   state->bat.color = 0x00FFFFFF;
+  state->bat.can_shoot = false;
   state->ball_count = 1;
 
   for (int i = 0; i < MAX_BALLS; ++i) {
@@ -107,25 +108,25 @@ void InitGameState(Program_State *state, Pixel_Buffer *screen) {
   // Create levels
   {
     int level = 0;
-    state->levels[level++].layout =
-        "           \n"
-        " \n"
-        " \n"
-        " \n"
-        " \n"
-        " \n"
-        " \n"
-        " \n"
-        " \n"
-        " \n"
-        " \n"
-        " \n"
-        " \n"
-        " \n"
-        " \n"
-        " \n"
-        " \n"
-        "         x ";
+    // state->levels[level++].layout =
+    //     "           \n"
+    //     " \n"
+    //     " \n"
+    //     " \n"
+    //     " \n"
+    //     " \n"
+    //     " \n"
+    //     " \n"
+    //     " \n"
+    //     " \n"
+    //     " \n"
+    //     " \n"
+    //     " \n"
+    //     " \n"
+    //     " \n"
+    //     " \n"
+    //     " \n"
+    //     "         x ";
     state->levels[level++].layout =
         "           \n"
         " sx xxx xs \n"
@@ -238,6 +239,24 @@ void DrawBat(Pixel_Buffer *screen, Bat *bat, u32 color) {
   int top = screen->height - bat->bottom - bat->height;
   Rect bat_rect = {left, top, bat->width, bat->height};
   DrawRect(screen, bat_rect, color);
+  const int kPlatformWidth = 10;
+  const int kPlatformHeight = 2;
+  Rect left_platform = {left, top + bat->height, kPlatformWidth,
+                        kPlatformHeight};
+  Rect right_platform = {left + bat->width - kPlatformWidth, top + bat->height,
+                         kPlatformWidth, kPlatformHeight};
+  DrawRect(screen, left_platform, color);
+  DrawRect(screen, right_platform, color);
+  if (bat->can_shoot) {
+    const int kGunHeight = 3;
+    const int kGunWidth = 3;
+    Rect left_gun = {left + bat->width / 3 - kGunWidth / 2, top - kGunHeight,
+                     kGunWidth, kGunHeight};
+    Rect right_gun = {left + 2 * bat->width / 3 - kGunWidth / 2,
+                      top - kGunHeight, kGunWidth, kGunHeight};
+    DrawRect(screen, left_gun, color);
+    DrawRect(screen, right_gun, color);
+  }
 }
 
 bool BuffActivated(Program_State *state, Buff_Type type) {
@@ -336,6 +355,11 @@ void MoveBat(Pixel_Buffer *screen, Program_State *state, User_Input *input) {
         Ball *ball = state->balls + i;
         ball->speed = Scale(Normalize(ball->speed), START_BALL_SPEED);
       }
+    }
+    if (BuffActivated(state, Buff_Gun)) {
+      state->bat.can_shoot = true;
+    } else if (BuffDeactivated(state, Buff_Gun)) {
+      state->bat.can_shoot = false;
     }
   }
 

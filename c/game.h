@@ -49,6 +49,7 @@ typedef struct Bat {
   int width;
   int height;
   u32 color;
+  bool can_shoot;
 } Bat;
 
 typedef struct Ball {
@@ -100,7 +101,7 @@ typedef struct Buff {
 } Buff;
 
 #define MAX_BALLS 10
-#define MAX_LEVELS 4
+#define MAX_LEVELS 3
 #define MAX_BUFFS 10
 #define BUFF_TTL 60 * 60  // in frames
 #define BRICKS_PER_ROW 11
