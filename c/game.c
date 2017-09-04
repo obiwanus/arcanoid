@@ -29,7 +29,6 @@ void AttachToBat(Ball *ball, Bat *bat, Pixel_Buffer *screen) {
   ball->y = screen->height - (bat->bottom + bat->height + ball->radius / 2) - 5;
 }
 
-
 void ResetBall(Ball *ball, Bat *bat) {
   ball->active = true;
   ball->radius = 8.f;
@@ -262,6 +261,12 @@ Ball *GetFirstBall(Program_State *state, bool is_active) {
   return NULL;
 }
 
+void ReleaseBalls(Program_State *state) {
+  for (int i = 0; i < MAX_BALLS; ++i) {
+    state->balls[i].attached = false;
+  }
+}
+
 void MoveBat(Pixel_Buffer *screen, Program_State *state, User_Input *input) {
   Bat *bat = &state->bat;
 
@@ -284,11 +289,13 @@ void MoveBat(Pixel_Buffer *screen, Program_State *state, User_Input *input) {
       if (bat->left > kMaxLeft) {
         bat->left = kMaxLeft;
       }
+      ReleaseBalls(state);
     }
     if (BuffActivated(state, Buff_Shrink)) {
       bat->width = DEFAULT_BAT_WIDTH / 2;
       bat->left += DEFAULT_BAT_WIDTH / 4;
       state->active_buffs[Buff_Enlarge] = 0;  // cancel enlarge if present
+      ReleaseBalls(state);
     } else if (BuffDeactivated(state, Buff_Shrink)) {
       bat->width = DEFAULT_BAT_WIDTH;
       bat->left += DEFAULT_BAT_WIDTH / 4;
@@ -299,9 +306,7 @@ void MoveBat(Pixel_Buffer *screen, Program_State *state, User_Input *input) {
     }
     // Release balls on deactivation
     if (BuffDeactivated(state, Buff_Sticky)) {
-      for (int i = 0; i < MAX_BALLS; ++i) {
-        state->balls[i].attached = false;
-      }
+      ReleaseBalls(state);
     }
     // Only activate multi ball once
     if (BuffActivated(state, Buff_MultiBall)) {
@@ -483,7 +488,7 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
         }
 
         // Reflect the ball
-        {
+        if (!BuffIsActive(state, Buff_PowerBall)) {
           float ldist = FAbs(left - ball->x);
           float rdist = FAbs(right - ball->x);
           float tdist = FAbs(top - ball->y);

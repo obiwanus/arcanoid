@@ -1,6 +1,5 @@
 
 - Fix horizontal reflection
-- Power ball
 - Shooting
 - Ball speed up
 - Colorful bricks
@@ -18,6 +17,7 @@ DONE:
 - Sticky ball
 - Multi ball
 - Slow ball
+- Power ball
 
 4 Sep 2017
 - Reset ball to sticky state after change level
