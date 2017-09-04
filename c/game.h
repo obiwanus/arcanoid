@@ -52,7 +52,9 @@ typedef struct Bat {
 } Bat;
 
 typedef struct Ball {
+  bool active;
   bool attached;
+  float attached_x;
   float radius;
   u32 color;
   float x;
@@ -83,8 +85,8 @@ typedef enum Buff_Type {
   Buff_Inactive = 0,
   Buff_Enlarge,
   Buff_Shrink,
-  Buff__COUNT,
   Buff_Sticky,
+  Buff__COUNT,
   Buff_MultiBall,
   Buff_PowerBall,
   Buff_SlowBall,

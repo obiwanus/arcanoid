@@ -25,16 +25,17 @@ bool ButtonWasDown(User_Input *input, Input_Button button) {
 }
 
 void AttachToBat(Ball *ball, Bat *bat, Pixel_Buffer *screen) {
-  ball->x = bat->left + bat->width / 2 + 5;
+  ball->x = bat->left + ball->attached_x;
   ball->y = screen->height - (bat->bottom + bat->height + ball->radius / 2) - 5;
 }
 
 #define START_BALL_SPEED 5
 
-void ResetBall(Ball *ball) {
+void ResetBall(Ball *ball, Bat *bat) {
   ball->radius = 8.f;
   ball->color = 0x00FFFFFF;
   ball->attached = true;
+  ball->attached_x = bat->width / 2 + 5;
   ball->speed.x = START_BALL_SPEED;
   ball->speed.y = -START_BALL_SPEED;
 }
@@ -49,7 +50,7 @@ void InitGameState(Program_State *state, Pixel_Buffer *screen) {
   state->bat.color = 0x00FFFFFF;
   state->ball_count = 1;
   Ball *main_ball = &state->balls[0];
-  ResetBall(main_ball);
+  ResetBall(main_ball, &state->bat);
   AttachToBat(main_ball, &state->bat, screen);
 
   state->current_level = 0;
@@ -206,6 +207,10 @@ bool BuffDeactivated(Program_State *state, Buff_Type type) {
   return state->active_buffs[type] == 1;
 }
 
+bool BuffIsActive(Program_State *state, Buff_Type type) {
+  return state->active_buffs[type] > 0;
+}
+
 void MoveBat(Pixel_Buffer *screen, Program_State *state, User_Input *input) {
   Bat *bat = &state->bat;
 
@@ -239,6 +244,12 @@ void MoveBat(Pixel_Buffer *screen, Program_State *state, User_Input *input) {
       const int kMaxLeft = screen->width - SCREEN_PADDING - bat->width;
       if (bat->left > kMaxLeft) {
         bat->left = kMaxLeft;
+      }
+    }
+    // Release balls on deactivation
+    if (BuffDeactivated(state, Buff_Sticky)) {
+      for (int i = 0; i < MAX_BALLS; ++i) {
+        state->balls[i].attached = false;
       }
     }
   }
@@ -349,6 +360,10 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
           float t = (ball->x - kBMiddle) / (kBRight - kBMiddle);
           v2 new_direction = Lerp(kVectorUp, kVectorRight, t);
           ball->speed = Scale(Normalize(new_direction), Length(ball->speed));
+        }
+        if (BuffIsActive(state, Buff_Sticky)) {
+          ball->attached = true;
+          ball->attached_x = ball->x - bat->left;
         }
       }
     }
@@ -492,8 +507,8 @@ void MoveBuffs(Pixel_Buffer *screen, Program_State *state) {
 
     if (RectsIntersect(bat_rect, buff_rect)) {
       // Activate buff
-      if (state->active_buffs[buff->type] > 0) {
-        // If already active, don't activate again
+      if (BuffIsActive(state, buff->type)) {
+        // If already active, don't activate again, but prolong
         state->active_buffs[buff->type] = BUFF_TTL - 1;
       } else {
         state->active_buffs[buff->type] = BUFF_TTL;
@@ -557,7 +572,7 @@ bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
 
     // Reset ball to the attached state. Remove other balls
     state->ball_count = 1;
-    ResetBall(&state->balls[0]);
+    ResetBall(&state->balls[0], &state->bat);
     AttachToBat(&state->balls[0], &state->bat, screen);
 
     // Init new bricks
