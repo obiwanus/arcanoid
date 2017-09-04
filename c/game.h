@@ -82,8 +82,8 @@ typedef enum Brick {
 typedef enum Buff_Type {
   Buff_Inactive = 0,
   Buff_Enlarge,
-  Buff__COUNT,
   Buff_Shrink,
+  Buff__COUNT,
   Buff_Sticky,
   Buff_MultiBall,
   Buff_PowerBall,

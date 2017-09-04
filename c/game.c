@@ -220,10 +220,22 @@ void MoveBat(Pixel_Buffer *screen, Program_State *state, User_Input *input) {
       if (bat->left < SCREEN_PADDING) {
         bat->left = SCREEN_PADDING;
       }
-    }
-    if (BuffDeactivated(state, Buff_Enlarge)) {
+      state->active_buffs[Buff_Shrink] = 0;  // cancel shrink if present
+    } else if (BuffDeactivated(state, Buff_Enlarge)) {
       bat->width = DEFAULT_BAT_WIDTH;
       bat->left += DEFAULT_BAT_WIDTH / 2;
+      const int kMaxLeft = screen->width - SCREEN_PADDING - bat->width;
+      if (bat->left > kMaxLeft) {
+        bat->left = kMaxLeft;
+      }
+    }
+    if (BuffActivated(state, Buff_Shrink)) {
+      bat->width = DEFAULT_BAT_WIDTH / 2;
+      bat->left += DEFAULT_BAT_WIDTH / 4;
+      state->active_buffs[Buff_Enlarge] = 0;  // cancel enlarge if present
+    } else if (BuffDeactivated(state, Buff_Shrink)) {
+      bat->width = DEFAULT_BAT_WIDTH;
+      bat->left += DEFAULT_BAT_WIDTH / 4;
       const int kMaxLeft = screen->width - SCREEN_PADDING - bat->width;
       if (bat->left > kMaxLeft) {
         bat->left = kMaxLeft;

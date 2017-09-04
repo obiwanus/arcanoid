@@ -1,6 +1,5 @@
 
 - Fix horizontal reflection
-- Shrinking
 - Sticky ball
 - Multi ball
 - Power ball
@@ -17,6 +16,7 @@ DONE:
 
 5 Sep 2017
 - Enlarging
+- Shrinking
 
 4 Sep 2017
 - Reset ball to sticky state after change level
