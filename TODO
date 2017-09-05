@@ -1,5 +1,4 @@
 
-- Check for losing
 - ASM!
 
 ========================================================================
@@ -12,6 +11,7 @@ DONE:
 - Bottom wall
 - Fix horizontal reflection
 - Different buff timings
+- Check for losing
 
 5 Sep 2017
 - Enlarging

@@ -496,9 +496,19 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
       ball->x = (ball->x < kLeft) ? kLeft : kRight;
       ball->speed.x = -ball->speed.x;
     }
-    if (ball->y < kTop || ball->y > kBottom) {
-      ball->y = (ball->y < kTop) ? kLeft : kBottom;
+    if (ball->y < kTop) {
+      ball->y = kTop;
       ball->speed.y = -ball->speed.y;
+    }
+    if (ball->y > kBottom && BuffIsActive(state, Buff_BottomWall)) {
+      // Reflect from the bottom wall
+      ball->y = kBottom;
+      ball->speed.y = -ball->speed.y;
+    } else if (ball->y > screen->height + ball->radius) {  // completely off screen
+      // Destroy the ball
+      ball->active = false;
+      state->ball_count--;
+      continue;
     }
 
     // Collision with the bat
@@ -785,7 +795,7 @@ bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state, User_Input *inp
   assert(state->current_level < MAX_LEVELS);
 
   // TODO: is it a good idea to check it every time?
-  if (!state->level_initialised) {
+  if (!state->level_initialised || state->ball_count <= 0) {
     // Clear screen
     Rect screen_rect = {0, 0, screen->width, screen->height};
     DrawRect(screen, screen_rect, BG_COLOR);
