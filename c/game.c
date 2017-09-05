@@ -398,9 +398,13 @@ void MoveBat(Pixel_Buffer *screen, Program_State *state, User_Input *input) {
       }
     }
     if (BuffActivated(state, Buff_Gun)) {
+      state->active_buffs[Buff_Gun] = BUFF_TTL / 3;  // reduce buff time
       state->bat.can_shoot = true;
     } else if (BuffDeactivated(state, Buff_Gun)) {
       state->bat.can_shoot = false;
+    }
+    if (BuffActivated(state, Buff_PowerBall)) {
+      state->active_buffs[Buff_PowerBall] = BUFF_TTL / 6;  // reduce buff time
     }
   }
 
