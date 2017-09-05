@@ -390,13 +390,13 @@ void MoveBat(Pixel_Buffer *screen, Program_State *state, User_Input *input) {
         state->ball_count += 2;
       }
     }
-    if (BuffActivated(state, Buff_SlowBall)) {
-      state->active_buffs[Buff_SlowBall] = 0;  // one time buff
-      for (int i = 0; i < MAX_BALLS; ++i) {
-        Ball *ball = state->balls + i;
-        ball->speed = Scale(Normalize(ball->speed), START_BALL_SPEED);
-      }
-    }
+    // if (BuffActivated(state, Buff_SlowBall)) {
+    //   state->active_buffs[Buff_SlowBall] = 0;  // one time buff
+    //   for (int i = 0; i < MAX_BALLS; ++i) {
+    //     Ball *ball = state->balls + i;
+    //     ball->speed = Scale(Normalize(ball->speed), START_BALL_SPEED);
+    //   }
+    // }
     if (BuffActivated(state, Buff_Gun)) {
       state->active_buffs[Buff_Gun] = BUFF_TTL / 3;  // reduce buff time
       state->bat.can_shoot = true;
@@ -591,13 +591,13 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
 
           // Gradually speed up the balls
           if (Length(ball->speed) < MAX_BALL_SPEED) {
-            ball->speed = Add(ball->speed, Scale(Normalize(ball->speed), 0.01f));
+            ball->speed = Add(ball->speed, Scale(Normalize(ball->speed), 0.05f));
           }
         }
 
         // Drop buffs/debuffs
         {
-          const int kChance = 25;  // percent
+          const int kChance = 15;  // percent
           if ((rand() % 100) < kChance && state->falling_buffs < MAX_BUFFS) {
             state->falling_buffs++;
             int next_available_buff = -1;

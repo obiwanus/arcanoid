@@ -87,10 +87,10 @@ typedef enum Buff_Type {
   Buff_Sticky,
   Buff_MultiBall,
   Buff_PowerBall,
-  Buff_SlowBall,
   Buff_Gun,
   Buff_BottomWall,
   Buff__COUNT,
+  Buff_SlowBall,
 } Buff_Type;
 
 typedef struct Buff {
