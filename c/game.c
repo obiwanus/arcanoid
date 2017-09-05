@@ -67,6 +67,13 @@ void InitLevel(Program_State *state, Pixel_Buffer *screen, int level) {
     state->bricks[i] = Brick_Empty;
   }
 
+  // Remove all bullets
+  state->bullet_cooldown = 0;
+  state->bullets_in_flight = 0;
+  for (int i = 0; i < MAX_BULLETS; ++i) {
+    state->bullets[i] = V2(-1, -1);  // negative means inactive
+  }
+
   // Clean up all buffs
   state->falling_buffs = 0;
   for (int i = 0; i < MAX_BUFFS; ++i) {
@@ -190,6 +197,37 @@ void InitGameState(Program_State *state, Pixel_Buffer *screen) {
   InitLevel(state, screen, 0);
 }
 
+Rect GetBrickRect(Pixel_Buffer *screen, int number) {
+  const int kPadding = 10;
+  const int kBrickWidth = (screen->width - kPadding * 2) / BRICKS_PER_ROW;
+  const int kBrickHeight = 20;
+
+  int brick_x = (number % BRICKS_PER_ROW) * kBrickWidth + kPadding;
+  int brick_y = (number / BRICKS_PER_ROW) * kBrickHeight + kPadding;
+
+  Rect result = {brick_x, brick_y, kBrickWidth, kBrickHeight};
+  return result;
+}
+
+Rect GetBatRect(Pixel_Buffer *screen, Bat *bat) {
+  Rect result = {(int)bat->left, screen->height - bat->bottom - bat->height, bat->width,
+                 bat->height};
+  return result;
+}
+
+void GetGunRects(Pixel_Buffer *screen, Bat *bat, Rect *gun1, Rect *gun2) {
+  const int kGunHeight = 3;
+  const int kGunWidth = 3;
+  int left = (int)bat->left;
+  int top = screen->height - bat->bottom - bat->height;
+
+  gun1->left = left + (bat->width / 3) - (kGunWidth / 2);
+  gun2->left = gun1->left + bat->width / 3;
+  gun1->top = gun2->top = top - kGunHeight;
+  gun1->width = gun2->width = kGunWidth;
+  gun1->height = gun2->height = kGunHeight;
+}
+
 void DrawPixel(Pixel_Buffer *screen, int x, int y, u32 color) {
   u32 *pixel = screen->pixels + screen->width * y + x;
   *pixel = color;
@@ -212,8 +250,7 @@ void DrawRect(Pixel_Buffer *screen, Rect rect, u32 color) {
   }
 }
 
-void DrawCircle(Pixel_Buffer *screen, float X, float Y, float radius,
-                u32 color) {
+void DrawCircle(Pixel_Buffer *screen, float X, float Y, float radius, u32 color) {
   float screen_right = (float)screen->width;
   float screen_bottom = (float)screen->height;
 
@@ -241,21 +278,16 @@ void DrawBat(Pixel_Buffer *screen, Bat *bat, u32 color) {
   DrawRect(screen, bat_rect, color);
   const int kPlatformWidth = 10;
   const int kPlatformHeight = 2;
-  Rect left_platform = {left, top + bat->height, kPlatformWidth,
-                        kPlatformHeight};
-  Rect right_platform = {left + bat->width - kPlatformWidth, top + bat->height,
-                         kPlatformWidth, kPlatformHeight};
+  Rect left_platform = {left, top + bat->height, kPlatformWidth, kPlatformHeight};
+  Rect right_platform = {left + bat->width - kPlatformWidth, top + bat->height, kPlatformWidth,
+                         kPlatformHeight};
   DrawRect(screen, left_platform, color);
   DrawRect(screen, right_platform, color);
   if (bat->can_shoot) {
-    const int kGunHeight = 3;
-    const int kGunWidth = 3;
-    Rect left_gun = {left + bat->width / 3 - kGunWidth / 2, top - kGunHeight,
-                     kGunWidth, kGunHeight};
-    Rect right_gun = {left + 2 * bat->width / 3 - kGunWidth / 2,
-                      top - kGunHeight, kGunWidth, kGunHeight};
-    DrawRect(screen, left_gun, color);
-    DrawRect(screen, right_gun, color);
+    Rect gun1, gun2;
+    GetGunRects(screen, bat, &gun1, &gun2);
+    DrawRect(screen, gun1, color);
+    DrawRect(screen, gun2, color);
   }
 }
 
@@ -277,6 +309,17 @@ Ball *GetFirstBall(Program_State *state, bool is_active) {
       return &state->balls[i];
     }
   }
+  return NULL;
+}
+
+Bullet *GetAvailableBullet(Program_State *state) {
+  for (int i = 0; i < MAX_BULLETS; ++i) {
+    Bullet *bullet = state->bullets + i;
+    if (bullet->y <= 0) {
+      return bullet;
+    }
+  }
+  fatal_error("No available bullets");
   return NULL;
 }
 
@@ -342,10 +385,8 @@ void MoveBat(Pixel_Buffer *screen, Program_State *state, User_Input *input) {
         const int kSpeedModifier = -10;
         left_ball->speed.x -= kSpeedModifier;
         right_ball->speed.x += kSpeedModifier;
-        left_ball->speed =
-            Scale(Normalize(left_ball->speed), Length(ball->speed));
-        right_ball->speed =
-            Scale(Normalize(right_ball->speed), Length(ball->speed));
+        left_ball->speed = Scale(Normalize(left_ball->speed), Length(ball->speed));
+        right_ball->speed = Scale(Normalize(right_ball->speed), Length(ball->speed));
         state->ball_count += 2;
       }
     }
@@ -380,27 +421,24 @@ void MoveBat(Pixel_Buffer *screen, Program_State *state, User_Input *input) {
     bat->left = kRight - bat->width;
   }
 
+  // Shoot
+  if (bat->can_shoot && ButtonIsDown(input, IB_space) && state->bullet_cooldown == 0) {
+    Rect gun1, gun2;
+    GetGunRects(screen, bat, &gun1, &gun2);
+
+    Bullet *bullet1 = GetAvailableBullet(state);
+    bullet1->y = gun1.top;
+    Bullet *bullet2 = GetAvailableBullet(state);
+    bullet2->y = gun2.top;
+    bullet1->x = gun1.left;
+    bullet2->x = gun2.left;
+
+    state->bullets_in_flight += 2;
+    state->bullet_cooldown = BULLET_COOLDOWN;
+  }
+
   // Redraw
   DrawBat(screen, bat, bat->color);
-}
-
-Rect GetBrickRect(Pixel_Buffer *screen, int number) {
-  const int kPadding = 10;
-  const int kBrickWidth = (screen->width - kPadding * 2) / BRICKS_PER_ROW;
-  const int kBrickHeight = 20;
-
-  int brick_x = (number % BRICKS_PER_ROW) * kBrickWidth + kPadding;
-  int brick_y = (number / BRICKS_PER_ROW) * kBrickHeight + kPadding;
-
-  Rect result = {brick_x, brick_y, kBrickWidth, kBrickHeight};
-  return result;
-}
-
-Rect GetBatRect(Pixel_Buffer *screen, Bat *bat) {
-  Rect result = {(int)bat->left, screen->height - bat->bottom - bat->height,
-                 bat->width, bat->height};
-
-  return result;
 }
 
 bool RectsIntersect(Rect r1, Rect r2) {
@@ -408,9 +446,19 @@ bool RectsIntersect(Rect r1, Rect r2) {
   int r2_right = r2.left + r2.width;
   int r1_bottom = r1.top + r1.height;
   int r2_bottom = r2.top + r2.height;
-  bool miss = (r1.left > r2_right || r2.left > r1_right || r1.top > r2_bottom ||
-               r2.top > r1_bottom);
+  bool miss =
+      (r1.left > r2_right || r2.left > r1_right || r1.top > r2_bottom || r2.top > r1_bottom);
   return !miss;
+}
+
+void HitBrick(Pixel_Buffer *screen, Brick *bricks, int number, Rect brick_rect) {
+  if (bricks[number] == Brick_Strong) {
+    bricks[number] = Brick_Normal;
+  } else if (bricks[number] == Brick_Normal) {
+    // Erase
+    bricks[number] = Brick_Empty;
+    DrawRect(screen, brick_rect, BG_COLOR);
+  }
 }
 
 void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
@@ -457,8 +505,8 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
                   kBBottom = screen->height - bat->bottom,
                   kBTop = kBBottom - bat->height - ball->radius,
                   kBMiddle = (kBLeft + kBRight) / 2.0f;
-      bool collides = (kBLeft <= ball->x && ball->x <= kBRight &&
-                       kBTop <= ball->y && ball->y <= kBBottom);
+      bool collides =
+          (kBLeft <= ball->x && ball->x <= kBRight && kBTop <= ball->y && ball->y <= kBBottom);
       if (collides) {
         ball->y = kBTop;
         ball->speed.y = -ball->speed.y;
@@ -498,18 +546,11 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
         const float bottom = brick_rect.top + brick_rect.height + ball->radius;
 
         // TODO: handle corners
-        bool collides = (left <= ball->x && ball->x <= right &&
-                         top <= ball->y && ball->y <= bottom);
+        bool collides =
+            (left <= ball->x && ball->x <= right && top <= ball->y && ball->y <= bottom);
         if (!collides) continue;
 
-        // Hit the brick
-        if (brick == Brick_Strong) {
-          bricks[i] = Brick_Normal;
-        } else if (brick == Brick_Normal) {
-          // Erase
-          bricks[i] = Brick_Empty;
-          DrawRect(screen, brick_rect, BG_COLOR);
-        }
+        HitBrick(screen, bricks, i, brick_rect);
 
         // Reflect the ball
         if (!BuffIsActive(state, Buff_PowerBall)) {
@@ -520,12 +561,10 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
 
           if (ldist + rdist < tdist + bdist) {
             // ball->x = (ldist < rdist) ? left : right;
-            ball->speed.x =
-                (ldist < rdist) ? -FAbs(ball->speed.x) : FAbs(ball->speed.x);
+            ball->speed.x = (ldist < rdist) ? -FAbs(ball->speed.x) : FAbs(ball->speed.x);
           } else {
             // ball->y = (tdist < bdist) ? top : bottom;
-            ball->speed.y =
-                (tdist < bdist) ? -FAbs(ball->speed.y) : FAbs(ball->speed.y);
+            ball->speed.y = (tdist < bdist) ? -FAbs(ball->speed.y) : FAbs(ball->speed.y);
           }
         }
 
@@ -559,7 +598,7 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
   }
 }
 
-void MoveBuffs(Pixel_Buffer *screen, Program_State *state) {
+void UpdateBuffs(Pixel_Buffer *screen, Program_State *state) {
   if (state->falling_buffs < 1) return;
 
   const int kBuffWidth = 40;
@@ -575,8 +614,7 @@ void MoveBuffs(Pixel_Buffer *screen, Program_State *state) {
 
     ++falling_seen;
 
-    Rect buff_rect = {(int)buff->position.x, (int)buff->position.y, kBuffWidth,
-                      kBuffHeight};
+    Rect buff_rect = {(int)buff->position.x, (int)buff->position.y, kBuffWidth, kBuffHeight};
 
     // Erase
     DrawRect(screen, buff_rect, BG_COLOR);
@@ -642,6 +680,40 @@ void MoveBuffs(Pixel_Buffer *screen, Program_State *state) {
   }
 }
 
+void UpdateBullets(Pixel_Buffer *screen, Program_State *state) {
+  const int kBulletSize = 3;
+  const float kBulletSpeed = 7.5f;
+  int seen = 0;
+  for (int i = 0; i < MAX_BULLETS; ++i) {
+    if (seen >= state->bullets_in_flight) return;
+    Bullet *bullet = state->bullets + i;
+    if (bullet->y <= 0) continue;
+    seen++;
+
+    Rect bullet_rect = {(int)bullet->x, (int)bullet->y, kBulletSize, kBulletSize};
+    DrawRect(screen, bullet_rect, BG_COLOR);
+    bullet->y -= kBulletSpeed;
+    bullet_rect.top = (int)bullet->y;
+
+    if (bullet->y <= 0) continue;  // reached the top
+
+    // Check collision with bricks - brute force
+    for (int j = 0; j < BRICKS_PER_COL * BRICKS_PER_ROW; ++j) {
+      if (state->bricks[j] == Brick_Empty) continue;
+      Rect brick_rect = GetBrickRect(screen, j);
+      if (RectsIntersect(brick_rect, bullet_rect)) {
+        HitBrick(screen, state->bricks, j, brick_rect);
+        bullet->y = -1;  // destroy bullet
+        break;
+      }
+    }
+
+    if (bullet->y > 0) {
+      DrawRect(screen, bullet_rect, 0x00FFFFFF);
+    }
+  }
+}
+
 void DrawBricks(Pixel_Buffer *screen, Brick *bricks) {
   for (int i = 0; i < BRICKS_PER_ROW * BRICKS_PER_COL; ++i) {
     if (bricks[i] == Brick_Empty) continue;
@@ -664,8 +736,7 @@ bool LevelComplete(Brick *bricks) {
   return true;
 }
 
-bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
-                     User_Input *input) {
+bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state, User_Input *input) {
   assert(state->current_level < MAX_LEVELS);
 
   // TODO: is it a good idea to check it every time?
@@ -681,10 +752,12 @@ bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
     return false;
   }
 
-  if (ButtonWasDown(input, IB_space)) {
-    for (int i = 0; i < MAX_BALLS; ++i) {
-      state->balls[i].attached = false;
-    }
+  if (state->bullet_cooldown > 0) {
+    state->bullet_cooldown--;
+  }
+
+  if (ButtonIsDown(input, IB_space)) {
+    ReleaseBalls(state);
   }
 
   MoveBat(screen, state, input);
@@ -692,13 +765,15 @@ bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
 
   DrawBricks(screen, state->bricks);
 
+  UpdateBullets(screen, state);
+
   // Decrement all buffs
   for (int i = 0; i < Buff__COUNT; ++i) {
     if (state->active_buffs[i] > 0) {
       state->active_buffs[i]--;
     }
   }
-  MoveBuffs(screen, state);
+  UpdateBuffs(screen, state);
 
   if (LevelComplete(state->bricks)) {
     state->current_level++;

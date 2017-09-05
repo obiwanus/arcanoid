@@ -63,9 +63,7 @@ typedef struct Ball {
   v2 speed;
 } Ball;
 
-typedef struct Level {
-  char *layout;
-} Level;
+typedef struct Level { char *layout; } Level;
 
 typedef struct Rect {
   int left;
@@ -100,16 +98,20 @@ typedef struct Buff {
   v2 position;
 } Buff;
 
+typedef v2 Bullet;
+
 #define MAX_BALLS 10
 #define MAX_LEVELS 3
 #define MAX_BUFFS 10
-#define BUFF_TTL 60 * 60  // in frames
+#define MAX_BULLETS 100
+#define BUFF_TTL 30 * 60  // in frames
 #define BRICKS_PER_ROW 11
 #define BRICKS_PER_COL 20
 #define SCREEN_PADDING 2
 #define DEFAULT_BAT_WIDTH 70
 #define BAT_MOVE_STEP 6.0f
 #define START_BALL_SPEED 5
+#define BULLET_COOLDOWN 10
 
 // TODO: maybe move bricks to level?
 typedef struct Program_State {
@@ -117,16 +119,18 @@ typedef struct Program_State {
   int ball_count;
   int current_level;
   int falling_buffs;
+  int bullet_cooldown;
+  int bullets_in_flight;
+  int active_buffs[Buff__COUNT];  // stores time to live
   Bat bat;
   Level levels[MAX_LEVELS];
   Ball balls[MAX_BALLS];
   Brick bricks[BRICKS_PER_COL * BRICKS_PER_ROW];
   Buff buffs[MAX_BUFFS];
-  int active_buffs[Buff__COUNT];  // stores time to live
+  Bullet bullets[MAX_BULLETS];
 } Program_State;
 
-bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state,
-                     User_Input *input);
+bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state, User_Input *input);
 
 void InitGameState(Program_State *state, Pixel_Buffer *screen);
 

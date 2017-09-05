@@ -1,8 +1,6 @@
 
-- Fix horizontal reflection
-- Shooting
 - Ball speed up
-- Colorful bricks
+- Fix horizontal reflection
 - Draw walls
 - Check for losing
 - (maybe) try to remove stuttering
@@ -10,6 +8,9 @@
 
 ========================================================================
 DONE:
+
+6 Sep 2017
+- Shooting
 
 5 Sep 2017
 - Enlarging
