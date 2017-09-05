@@ -1,5 +1,4 @@
 
-- Ball speed up
 - Bottom wall
 - Fix horizontal reflection
 - Check for losing
@@ -12,6 +11,7 @@ DONE:
 6 Sep 2017
 - Shooting
 - Draw walls
+- Ball speed up
 
 5 Sep 2017
 - Enlarging

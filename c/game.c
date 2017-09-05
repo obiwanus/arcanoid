@@ -565,6 +565,11 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
             // ball->y = (tdist < bdist) ? top : bottom;
             ball->speed.y = (tdist < bdist) ? -FAbs(ball->speed.y) : FAbs(ball->speed.y);
           }
+
+          // Gradually speed up the balls
+          if (Length(ball->speed) < MAX_BALL_SPEED) {
+            ball->speed = Scale(ball->speed, 1.02f);
+          }
         }
 
         // Drop buffs/debuffs
