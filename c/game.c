@@ -35,8 +35,9 @@ void ResetBall(Ball *ball, Bat *bat) {
   ball->color = 0x00FFFFFF;
   ball->attached = true;
   ball->attached_x = bat->width / 2 + 5;
-  ball->speed.x = START_BALL_SPEED;
-  ball->speed.y = -START_BALL_SPEED;
+  ball->speed.x = 1;
+  ball->speed.y = -1;
+  ball->speed = Scale(Normalize(ball->speed), START_BALL_SPEED);
 }
 
 void InitLevel(Program_State *state, Pixel_Buffer *screen, int level) {
@@ -568,7 +569,7 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
 
           // Gradually speed up the balls
           if (Length(ball->speed) < MAX_BALL_SPEED) {
-            ball->speed = Scale(ball->speed, 1.02f);
+            ball->speed = Add(ball->speed, Scale(Normalize(ball->speed), 0.01f));
           }
         }
 
@@ -744,11 +745,28 @@ void DrawWalls(Pixel_Buffer *screen, Program_State *state) {
   Rect left_wall = {0, 0, WALL_SIZE, screen->height};
   Rect right_wall = {screen->width - WALL_SIZE, 0, WALL_SIZE, screen->height};
   Rect top_wall = {0, 0, screen->width, WALL_SIZE};
+  Rect bottom_wall = {WALL_SIZE, screen->height - WALL_SIZE, screen->width - 2 * WALL_SIZE,
+                      WALL_SIZE};
 
   u32 color = 0x00999999;
   DrawRect(screen, left_wall, color);
   DrawRect(screen, right_wall, color);
   DrawRect(screen, top_wall, color);
+
+  // Bottom wall
+  int time_left = state->active_buffs[Buff_BottomWall];
+  if (time_left <= 0) {
+    color = BG_COLOR;
+  } else if (time_left < 100) {
+    color = 0x00222222;
+  } else if (time_left < 300) {
+    color = 0x00333333;
+  } else if (time_left < 600) {
+    color = 0x00454545;
+  } else if (time_left < 1000) {
+    color = 0x00666666;
+  }
+  DrawRect(screen, bottom_wall, color);
 }
 
 bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state, User_Input *input) {

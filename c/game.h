@@ -110,8 +110,8 @@ typedef v2 Bullet;
 #define WALL_SIZE 5
 #define DEFAULT_BAT_WIDTH 70
 #define BAT_MOVE_STEP 6.0f
-#define START_BALL_SPEED 3
-#define MAX_BALL_SPEED 9
+#define START_BALL_SPEED 4
+#define MAX_BALL_SPEED 8
 #define BULLET_COOLDOWN 20
 
 // TODO: maybe move bricks to level?
