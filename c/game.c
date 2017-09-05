@@ -198,12 +198,11 @@ void InitGameState(Program_State *state, Pixel_Buffer *screen) {
 }
 
 Rect GetBrickRect(Pixel_Buffer *screen, int number) {
-  const int kPadding = 10;
-  const int kBrickWidth = (screen->width - kPadding * 2) / BRICKS_PER_ROW;
+  const int kBrickWidth = (screen->width - WALL_SIZE * 2) / BRICKS_PER_ROW;
   const int kBrickHeight = 20;
 
-  int brick_x = (number % BRICKS_PER_ROW) * kBrickWidth + kPadding;
-  int brick_y = (number / BRICKS_PER_ROW) * kBrickHeight + kPadding;
+  int brick_x = (number % BRICKS_PER_ROW) * kBrickWidth + WALL_SIZE;
+  int brick_y = (number / BRICKS_PER_ROW) * kBrickHeight + WALL_SIZE;
 
   Rect result = {brick_x, brick_y, kBrickWidth, kBrickHeight};
   return result;
@@ -340,14 +339,14 @@ void MoveBat(Pixel_Buffer *screen, Program_State *state, User_Input *input) {
     if (BuffActivated(state, Buff_Enlarge)) {
       bat->width = 2 * DEFAULT_BAT_WIDTH;
       bat->left -= DEFAULT_BAT_WIDTH / 2;
-      if (bat->left < SCREEN_PADDING) {
-        bat->left = SCREEN_PADDING;
+      if (bat->left < WALL_SIZE) {
+        bat->left = WALL_SIZE;
       }
       state->active_buffs[Buff_Shrink] = 0;  // cancel shrink if present
     } else if (BuffDeactivated(state, Buff_Enlarge)) {
       bat->width = DEFAULT_BAT_WIDTH;
       bat->left += DEFAULT_BAT_WIDTH / 2;
-      const int kMaxLeft = screen->width - SCREEN_PADDING - bat->width;
+      const int kMaxLeft = screen->width - WALL_SIZE - bat->width;
       if (bat->left > kMaxLeft) {
         bat->left = kMaxLeft;
       }
@@ -361,7 +360,7 @@ void MoveBat(Pixel_Buffer *screen, Program_State *state, User_Input *input) {
     } else if (BuffDeactivated(state, Buff_Shrink)) {
       bat->width = DEFAULT_BAT_WIDTH;
       bat->left += DEFAULT_BAT_WIDTH / 4;
-      const int kMaxLeft = screen->width - SCREEN_PADDING - bat->width;
+      const int kMaxLeft = screen->width - WALL_SIZE - bat->width;
       if (bat->left > kMaxLeft) {
         bat->left = kMaxLeft;
       }
@@ -412,7 +411,7 @@ void MoveBat(Pixel_Buffer *screen, Program_State *state, User_Input *input) {
   if (ButtonIsDown(input, IB_right)) {
     move += BAT_MOVE_STEP;
   }
-  const int kLeft = SCREEN_PADDING, kRight = screen->width - SCREEN_PADDING;
+  const int kLeft = WALL_SIZE, kRight = screen->width - WALL_SIZE;
   bat->left += move;
   if (bat->left < kLeft) {
     bat->left = kLeft;
@@ -483,10 +482,10 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
     ball->y += ball->speed.y;
 
     // Collision with screen borders
-    const float kLeft = SCREEN_PADDING + ball->radius,
-                kRight = screen->width - SCREEN_PADDING - ball->radius,
-                kTop = SCREEN_PADDING + ball->radius,
-                kBottom = screen->height - SCREEN_PADDING - ball->radius;
+    const float kLeft = WALL_SIZE + ball->radius,
+                kRight = screen->width - WALL_SIZE - ball->radius,
+                kTop = WALL_SIZE + ball->radius,
+                kBottom = screen->height - WALL_SIZE - ball->radius;
 
     if (ball->x < kLeft || ball->x > kRight) {
       ball->x = (ball->x < kLeft) ? kLeft : kRight;
@@ -625,19 +624,19 @@ void UpdateBuffs(Pixel_Buffer *screen, Program_State *state) {
         color = 0x00F3B191;
       } break;
       case Buff_Shrink: {
-        color = 0x0013B1F1;
+        color = 0x00AA0100;
       } break;
       case Buff_Sticky: {
         color = 0x00F311F1;
       } break;
       case Buff_MultiBall: {
-        color = 0x00AA0100;
+        color = 0x004433FF;
       } break;
       case Buff_PowerBall: {
         color = 0x0033F199;
       } break;
       case Buff_SlowBall: {
-        color = 0x004433FF;
+        color = 0x0013B1F1;
       } break;
       case Buff_Gun: {
         color = 0x0088FF22;
@@ -736,6 +735,17 @@ bool LevelComplete(Brick *bricks) {
   return true;
 }
 
+void DrawWalls(Pixel_Buffer *screen, Program_State *state) {
+  Rect left_wall = {0, 0, WALL_SIZE, screen->height};
+  Rect right_wall = {screen->width - WALL_SIZE, 0, WALL_SIZE, screen->height};
+  Rect top_wall = {0, 0, screen->width, WALL_SIZE};
+
+  u32 color = 0x00999999;
+  DrawRect(screen, left_wall, color);
+  DrawRect(screen, right_wall, color);
+  DrawRect(screen, top_wall, color);
+}
+
 bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state, User_Input *input) {
   assert(state->current_level < MAX_LEVELS);
 
@@ -783,6 +793,8 @@ bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state, User_Input *inp
       return false;
     }
   }
+
+  DrawWalls(screen, state);
 
   return true;
 }

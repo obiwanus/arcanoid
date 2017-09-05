@@ -107,7 +107,7 @@ typedef v2 Bullet;
 #define BUFF_TTL 30 * 60  // in frames
 #define BRICKS_PER_ROW 11
 #define BRICKS_PER_COL 20
-#define SCREEN_PADDING 2
+#define WALL_SIZE 5
 #define DEFAULT_BAT_WIDTH 70
 #define BAT_MOVE_STEP 6.0f
 #define START_BALL_SPEED 5

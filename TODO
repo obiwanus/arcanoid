@@ -1,7 +1,7 @@
 
 - Ball speed up
+- Bottom wall
 - Fix horizontal reflection
-- Draw walls
 - Check for losing
 - (maybe) try to remove stuttering
 
@@ -11,6 +11,7 @@ DONE:
 
 6 Sep 2017
 - Shooting
+- Draw walls
 
 5 Sep 2017
 - Enlarging
