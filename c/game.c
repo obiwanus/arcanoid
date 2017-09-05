@@ -500,8 +500,9 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
     // Collision with the bat
     {
       Bat *bat = &state->bat;
-      const float kBLeft = bat->left - ball->radius,
-                  kBRight = bat->left + bat->width + ball->radius,
+      const float kBMargin = 2.0f,  // to shrink the collision rect
+                  kBLeft = bat->left - ball->radius + kBMargin,
+                  kBRight = bat->left + bat->width + ball->radius - kBMargin,
                   kBBottom = screen->height - bat->bottom,
                   kBTop = kBBottom - bat->height - ball->radius,
                   kBMiddle = (kBLeft + kBRight) / 2.0f;
@@ -511,7 +512,6 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
         ball->y = kBTop;
         ball->speed.y = -ball->speed.y;
 
-        // const float kReflect = bat->width / 10.0f;
         const v2 kVectorUp = {0, -1.0f};
         const v2 kVectorLeft = Normalize(V2(-1.5f, -1.0f));
         const v2 kVectorRight = Normalize(V2(1.5f, -1.0f));
@@ -559,12 +559,20 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
           float tdist = FAbs(top - ball->y);
           float bdist = FAbs(bottom - ball->y);
 
-          if (ldist + rdist < tdist + bdist) {
-            // ball->x = (ldist < rdist) ? left : right;
-            ball->speed.x = (ldist < rdist) ? -FAbs(ball->speed.x) : FAbs(ball->speed.x);
+          if (ldist <= rdist && ldist <= tdist && ldist <= bdist) {
+            // Reflect left
+            ball->speed.x = -FAbs(ball->speed.x);
+          } else if (rdist <= ldist && rdist <= tdist && rdist <= bdist) {
+            // Reflect right
+            ball->speed.x = FAbs(ball->speed.x);
+          } else if (tdist <= ldist && tdist <= rdist && tdist <= bdist) {
+            // Reflect top
+            ball->speed.y = -FAbs(ball->speed.y);
+          } else if (bdist <= ldist && bdist <= tdist && bdist <= rdist) {
+            // Reflect bottom
+            ball->speed.y = FAbs(ball->speed.y);
           } else {
-            // ball->y = (tdist < bdist) ? top : bottom;
-            ball->speed.y = (tdist < bdist) ? -FAbs(ball->speed.y) : FAbs(ball->speed.y);
+            fatal_error("Should never happen");
           }
 
           // Gradually speed up the balls

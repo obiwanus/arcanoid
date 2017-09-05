@@ -1,8 +1,7 @@
 
-- Fix horizontal reflection
+- Different buff timings
 - Check for losing
-- (maybe) try to remove stuttering
-
+- ASM!
 
 ========================================================================
 DONE:
@@ -12,6 +11,7 @@ DONE:
 - Draw walls
 - Ball speed up
 - Bottom wall
+- Fix horizontal reflection
 
 5 Sep 2017
 - Enlarging
