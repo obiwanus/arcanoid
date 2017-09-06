@@ -90,7 +90,6 @@ typedef enum Buff_Type {
   Buff_Gun,
   Buff_BottomWall,
   Buff__COUNT,
-  Buff_SlowBall,
 } Buff_Type;
 
 typedef struct Buff {
@@ -107,6 +106,7 @@ typedef v2 Bullet;
 #define BUFF_TTL 30 * 60  // in frames
 #define BRICKS_PER_ROW 11
 #define BRICKS_PER_COL 20
+#define BRICKS_TOTAL (BRICKS_PER_ROW * BRICKS_PER_COL)
 #define WALL_SIZE 5
 #define DEFAULT_BAT_WIDTH 70
 #define BAT_MOVE_STEP 6.0f
@@ -133,9 +133,7 @@ typedef struct Program_State {
 
 bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state, User_Input *input);
 
-void InitGameState(Program_State *state, Pixel_Buffer *screen);
-
-u64 LinuxGetWallClock();
+void CreateLevels(Level *levels);
 
 void fatal_error(char *string);
 

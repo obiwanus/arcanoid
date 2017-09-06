@@ -80,8 +80,11 @@ int main(int argc, char *argv[]) {
   *new_input = (const User_Input){};
 
   // Init program state
-  Program_State state;
-  InitGameState(&state, &pixel_buffer);
+  srand((unsigned)LinuxGetWallClock());
+  Program_State state = {0};
+  CreateLevels(state.levels);
+  state.level_initialised = false;
+  state.current_level = 0;
 
   // Main loop
   g_running = true;

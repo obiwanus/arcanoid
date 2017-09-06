@@ -26,176 +26,69 @@ bool ButtonWasDown(User_Input *input, Input_Button button) {
 
 void AttachToBat(Ball *ball, Bat *bat, Pixel_Buffer *screen) {
   ball->x = bat->left + ball->attached_x;
-  ball->y = screen->height - (bat->bottom + bat->height + ball->radius / 2) - 5;
+  ball->y = screen->height - (bat->bottom + bat->height + ball->radius / 2) - 1;
 }
 
-void ResetBall(Ball *ball, Bat *bat) {
-  ball->active = true;
-  ball->radius = 8.f;
-  ball->color = 0x00FFFFFF;
-  ball->attached = true;
-  ball->attached_x = bat->width / 2 + 5;
-  ball->speed.x = 1;
-  ball->speed.y = -1;
-  ball->speed = Scale(Normalize(ball->speed), START_BALL_SPEED);
-}
+void CreateLevels(Level *levels) {
+  int level = 0;
+  levels[level++].layout =
+      "           \n"
+      " sx xxx xs \n"
+      " sx xxx xs \n"
+      " sx xxx xs \n"
+      " sx xxx xs \n"
+      " sx xxx xs \n"
+      " sx xxx xs \n"
+      " sx xxx xs \n"
+      " sx xxx xs \n"
+      " sx xxx xs \n"
+      " sx xxx xs \n"
+      " sx xxx xs \n"
+      " sx xxx xs \n"
+      " sx xxx xs \n"
+      " sx xxx xs \n"
+      " sx xxx xs \n"
+      " sx xxx xs \n"
+      " sssssssss ";
+  levels[level++].layout =
+      " \n"
+      "sxxxx\n"
+      "sxxxxx \n"
+      "sxxxxxx \n"
+      "sxxxxxxx \n"
+      "sxxxxxxxx \n"
+      "sxxxxxxx \n"
+      "sxxxxxx \n"
+      "sxxxxx \n"
+      "sxxxx \n"
+      "sxxx \n"
+      "sxxxx \n"
+      "sxxxxx \n"
+      "sxxxxxx \n"
+      "sxxxxxxx \n"
+      "sxxxxxxxx \n"
+      "sxxxxxxxxx \n"
+      "ssssssssss ";
+  levels[level++].layout =
+      "\n"
+      "  s     s  \n"
+      "  s     s  \n"
+      "   s   s   \n"
+      "   s   s   \n"
+      "  xxxxxxx  \n"
+      "  xxxxxxx  \n"
+      " xxsxxxsxx \n"
+      " xxsxxxsxx \n"
+      "xxxxxxxxxxx\n"
+      "xxxxxxxxxxx\n"
+      "xxxxxxxxxxx\n"
+      "x xxxxxxx x\n"
+      "x x     x x\n"
+      "x x     x x\n"
+      "   ss ss   \n"
+      "   ss ss   ";
 
-void InitLevel(Program_State *state, Pixel_Buffer *screen, int level) {
-  state->bat.left = 100.0f;
-  state->bat.bottom = 20;
-  state->bat.width = DEFAULT_BAT_WIDTH;
-  state->bat.height = 13;
-  state->bat.color = 0x00FFFFFF;
-  state->bat.can_shoot = false;
-  state->ball_count = 1;
-
-  for (int i = 0; i < MAX_BALLS; ++i) {
-    Ball *ball = state->balls + i;
-    ResetBall(ball, &state->bat);
-    ball->active = 0;
-    ball->attached = 0;
-  }
-
-  Ball *main_ball = &state->balls[0];
-  ResetBall(main_ball, &state->bat);
-  AttachToBat(main_ball, &state->bat, screen);
-
-  state->current_level = level;
-  state->level_initialised = true;
-
-  // Clean up all bricks
-  for (int i = 0; i < BRICKS_PER_ROW * BRICKS_PER_COL; ++i) {
-    state->bricks[i] = Brick_Empty;
-  }
-
-  // Remove all bullets
-  state->bullet_cooldown = 0;
-  state->bullets_in_flight = 0;
-  for (int i = 0; i < MAX_BULLETS; ++i) {
-    state->bullets[i] = V2(-1, -1);  // negative means inactive
-  }
-
-  // Clean up all buffs
-  state->falling_buffs = 0;
-  for (int i = 0; i < MAX_BUFFS; ++i) {
-    state->buffs[i].type = Buff_Inactive;
-  }
-  for (int i = 0; i < Buff__COUNT; ++i) {
-    state->active_buffs[i] = 0;
-  }
-
-  // Init new bricks
-  int brick_x = 0, brick_y = 0;
-  char *b = state->levels[level].layout;
-  while (*b != '\0') {
-    if (*b == '\n') {
-      brick_x = 0;
-      brick_y++;
-    } else {
-      assert(brick_x < BRICKS_PER_ROW);
-      assert(brick_y < BRICKS_PER_COL);
-      int brick_num = brick_y * BRICKS_PER_ROW + brick_x;
-      if (*b == 'x') {
-        state->bricks[brick_num] = Brick_Normal;
-      } else if (*b == 'u') {
-        state->bricks[brick_num] = Brick_Unbreakable;
-      } else if (*b == 's') {
-        state->bricks[brick_num] = Brick_Strong;
-      } else {
-        state->bricks[brick_num] = Brick_Empty;
-      }
-      brick_x++;
-    }
-    b++;
-  }
-}
-
-void InitGameState(Program_State *state, Pixel_Buffer *screen) {
-  srand((unsigned)LinuxGetWallClock());
-
-  // Create levels
-  {
-    int level = 0;
-    // state->levels[level++].layout =
-    //     "           \n"
-    //     " \n"
-    //     " \n"
-    //     " \n"
-    //     " \n"
-    //     " \n"
-    //     " \n"
-    //     " \n"
-    //     " \n"
-    //     " \n"
-    //     " \n"
-    //     " \n"
-    //     " \n"
-    //     " \n"
-    //     " \n"
-    //     " \n"
-    //     " \n"
-    //     "         x ";
-    state->levels[level++].layout =
-        "           \n"
-        " sx xxx xs \n"
-        " sx xxx xs \n"
-        " sx xxx xs \n"
-        " sx xxx xs \n"
-        " sx xxx xs \n"
-        " sx xxx xs \n"
-        " sx xxx xs \n"
-        " sx xxx xs \n"
-        " sx xxx xs \n"
-        " sx xxx xs \n"
-        " sx xxx xs \n"
-        " sx xxx xs \n"
-        " sx xxx xs \n"
-        " sx xxx xs \n"
-        " sx xxx xs \n"
-        " sx xxx xs \n"
-        " sssssssss ";
-    state->levels[level++].layout =
-        " \n"
-        "sxxxx\n"
-        "sxxxxx \n"
-        "sxxxxxx \n"
-        "sxxxxxxx \n"
-        "sxxxxxxxx \n"
-        "sxxxxxxx \n"
-        "sxxxxxx \n"
-        "sxxxxx \n"
-        "sxxxx \n"
-        "sxxx \n"
-        "sxxxx \n"
-        "sxxxxx \n"
-        "sxxxxxx \n"
-        "sxxxxxxx \n"
-        "sxxxxxxxx \n"
-        "sxxxxxxxxx \n"
-        "ssssssssss ";
-    state->levels[level++].layout =
-        "\n"
-        "  s     s  \n"
-        "  s     s  \n"
-        "   s   s   \n"
-        "   s   s   \n"
-        "  xxxxxxx  \n"
-        "  xxxxxxx  \n"
-        " xxsxxxsxx \n"
-        " xxsxxxsxx \n"
-        "xxxxxxxxxxx\n"
-        "xxxxxxxxxxx\n"
-        "xxxxxxxxxxx\n"
-        "x xxxxxxx x\n"
-        "x x     x x\n"
-        "x x     x x\n"
-        "   ss ss   \n"
-        "   ss ss   ";
-
-    assert(level == MAX_LEVELS);
-  }
-
-  InitLevel(state, screen, 0);
+  assert(level == MAX_LEVELS);
 }
 
 Rect GetBrickRect(Pixel_Buffer *screen, int number) {
@@ -390,13 +283,6 @@ void MoveBat(Pixel_Buffer *screen, Program_State *state, User_Input *input) {
         state->ball_count += 2;
       }
     }
-    // if (BuffActivated(state, Buff_SlowBall)) {
-    //   state->active_buffs[Buff_SlowBall] = 0;  // one time buff
-    //   for (int i = 0; i < MAX_BALLS; ++i) {
-    //     Ball *ball = state->balls + i;
-    //     ball->speed = Scale(Normalize(ball->speed), START_BALL_SPEED);
-    //   }
-    // }
     if (BuffActivated(state, Buff_Gun)) {
       state->active_buffs[Buff_Gun] = BUFF_TTL / 3;  // reduce buff time
       state->bat.can_shoot = true;
@@ -548,7 +434,7 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
     // Collision with the bricks (brute force)
     {
       Brick *bricks = state->bricks;
-      for (int i = 0; i < BRICKS_PER_ROW * BRICKS_PER_COL; ++i) {
+      for (int i = 0; i < BRICKS_TOTAL; ++i) {
         Brick brick = bricks[i];
         if (brick == Brick_Empty) continue;
         Rect brick_rect = GetBrickRect(screen, i);
@@ -663,9 +549,6 @@ void UpdateBuffs(Pixel_Buffer *screen, Program_State *state) {
       case Buff_PowerBall: {
         color = 0x0033F199;
       } break;
-      case Buff_SlowBall: {
-        color = 0x0013B1F1;
-      } break;
       case Buff_Gun: {
         color = 0x0088FF22;
       } break;
@@ -742,7 +625,7 @@ void UpdateBullets(Pixel_Buffer *screen, Program_State *state) {
 }
 
 void DrawBricks(Pixel_Buffer *screen, Brick *bricks) {
-  for (int i = 0; i < BRICKS_PER_ROW * BRICKS_PER_COL; ++i) {
+  for (int i = 0; i < BRICKS_TOTAL; ++i) {
     if (bricks[i] == Brick_Empty) continue;
 
     // Draw brick
@@ -757,7 +640,7 @@ void DrawBricks(Pixel_Buffer *screen, Brick *bricks) {
 }
 
 bool LevelComplete(Brick *bricks) {
-  for (int i = 0; i < BRICKS_PER_ROW * BRICKS_PER_COL; ++i) {
+  for (int i = 0; i < BRICKS_TOTAL; ++i) {
     if (bricks[i] != Brick_Empty) return false;
   }
   return true;
@@ -794,21 +677,92 @@ void DrawWalls(Pixel_Buffer *screen, Program_State *state) {
 bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state, User_Input *input) {
   assert(state->current_level < MAX_LEVELS);
 
-  // TODO: is it a good idea to check it every time?
+  Bat *bat = &state->bat;
+
+  // Exit?
+  if (ButtonIsDown(input, IB_escape)) {
+    return false;
+  }
+
   if (!state->level_initialised || state->ball_count <= 0) {
     // Clear screen
     Rect screen_rect = {0, 0, screen->width, screen->height};
     DrawRect(screen, screen_rect, BG_COLOR);
 
-    InitLevel(state, screen, state->current_level);
-  }
+    bat->left = 100.0f;
+    bat->bottom = 20;
+    bat->width = DEFAULT_BAT_WIDTH;
+    bat->height = 13;
+    bat->color = 0x00FFFFFF;
+    bat->can_shoot = false;
 
-  if (ButtonIsDown(input, IB_escape)) {
-    return false;
-  }
+    // Reset all balls
+    for (int i = 0; i < MAX_BALLS; ++i) {
+      Ball *ball = state->balls + i;
+      ball->radius = 8.f;
+      ball->color = 0x00FFFFFF;
+      ball->speed.x = 1;
+      ball->speed.y = -1;
+      ball->speed = Scale(Normalize(ball->speed), START_BALL_SPEED);
+      ball->active = false;
+      ball->attached = false;
+    }
 
-  if (state->bullet_cooldown > 0) {
-    state->bullet_cooldown--;
+    // Activate and attach main ball
+    state->ball_count = 1;
+    Ball *main_ball = &state->balls[0];
+    main_ball->active = true;
+    main_ball->attached = true;
+    main_ball->attached_x = bat->width / 2 + 5;
+    AttachToBat(main_ball, bat, screen);
+
+    // Clean up all bricks
+    for (int i = 0; i < BRICKS_TOTAL; ++i) {
+      state->bricks[i] = Brick_Empty;
+    }
+
+    // Remove all bullets
+    state->bullet_cooldown = 0;
+    state->bullets_in_flight = 0;
+    for (int i = 0; i < MAX_BULLETS; ++i) {
+      state->bullets[i] = V2(-1, -1);  // negative means inactive
+    }
+
+    // Clean up all buffs
+    state->falling_buffs = 0;
+    for (int i = 0; i < MAX_BUFFS; ++i) {
+      state->buffs[i].type = Buff_Inactive;
+    }
+    for (int i = 0; i < Buff__COUNT; ++i) {
+      state->active_buffs[i] = 0;
+    }
+
+    // Init new bricks
+    int brick_x = 0, brick_y = 0;
+    char *b = state->levels[state->current_level].layout;
+    while (*b != '\0') {
+      if (*b == '\n') {
+        brick_x = 0;
+        brick_y++;
+      } else {
+        assert(brick_x < BRICKS_PER_ROW);
+        assert(brick_y < BRICKS_PER_COL);
+        int brick_num = brick_y * BRICKS_PER_ROW + brick_x;
+        if (*b == 'x') {
+          state->bricks[brick_num] = Brick_Normal;
+        } else if (*b == 'u') {
+          state->bricks[brick_num] = Brick_Unbreakable;
+        } else if (*b == 's') {
+          state->bricks[brick_num] = Brick_Strong;
+        } else {
+          state->bricks[brick_num] = Brick_Empty;
+        }
+        brick_x++;
+      }
+      b++;
+    }
+
+    state->level_initialised = true;
   }
 
   if (ButtonIsDown(input, IB_space)) {
@@ -821,6 +775,10 @@ bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state, User_Input *inp
   DrawBricks(screen, state->bricks);
 
   UpdateBullets(screen, state);
+
+  if (state->bullet_cooldown > 0) {
+    state->bullet_cooldown--;
+  }
 
   // Decrement all buffs
   for (int i = 0; i < Buff__COUNT; ++i) {
