@@ -24,6 +24,68 @@ u64 LinuxGetWallClock() {
   return result;
 }
 
+void CreateLevels(Level *levels) {
+  int level = 0;
+  levels[level++].layout =
+      "           \n"
+      " sx xxx xs \n"
+      " sx xxx xs \n"
+      " sx xxx xs \n"
+      " sx xxx xs \n"
+      " sx xxx xs \n"
+      " sx xxx xs \n"
+      " sx xxx xs \n"
+      " sx xxx xs \n"
+      " sx xxx xs \n"
+      " sx xxx xs \n"
+      " sx xxx xs \n"
+      " sx xxx xs \n"
+      " sx xxx xs \n"
+      " sx xxx xs \n"
+      " sx xxx xs \n"
+      " sx xxx xs \n"
+      " sssssssss ";
+  levels[level++].layout =
+      " \n"
+      "sxxxx\n"
+      "sxxxxx \n"
+      "sxxxxxx \n"
+      "sxxxxxxx \n"
+      "sxxxxxxxx \n"
+      "sxxxxxxx \n"
+      "sxxxxxx \n"
+      "sxxxxx \n"
+      "sxxxx \n"
+      "sxxx \n"
+      "sxxxx \n"
+      "sxxxxx \n"
+      "sxxxxxx \n"
+      "sxxxxxxx \n"
+      "sxxxxxxxx \n"
+      "sxxxxxxxxx \n"
+      "ssssssssss ";
+  levels[level++].layout =
+      "\n"
+      "  s     s  \n"
+      "  s     s  \n"
+      "   s   s   \n"
+      "   s   s   \n"
+      "  xxxxxxx  \n"
+      "  xxxxxxx  \n"
+      " xxsxxxsxx \n"
+      " xxsxxxsxx \n"
+      "xxxxxxxxxxx\n"
+      "xxxxxxxxxxx\n"
+      "xxxxxxxxxxx\n"
+      "x xxxxxxx x\n"
+      "x x     x x\n"
+      "x x     x x\n"
+      "   ss ss   \n"
+      "   ss ss   ";
+
+  assert(level == MAX_LEVELS);
+}
+
 int main(int argc, char *argv[]) {
   Display *display;
   Window window;
@@ -177,7 +239,7 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    bool result = UpdateAndRender(&pixel_buffer, &state, new_input);
+    bool result = update_and_render(&pixel_buffer, &state, new_input);
     if (!result) {
       g_running = false;
     }

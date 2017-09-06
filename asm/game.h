@@ -134,9 +134,17 @@ typedef struct Program_State {
   Bullet bullets[MAX_BULLETS];
 } Program_State;
 
-bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state, User_Input *input);
+// ASM interface
 
-void CreateLevels(Level *levels);
+#if defined(__GNUC__)
+#define PRE_CDECL
+#define POST_CDECL __attribute__((cdecl))
+#else
+#define PRE_CDECL __cdecl
+#define POST_CDECL
+#endif
+
+int PRE_CDECL update_and_render(Pixel_Buffer *screen, Program_State *state, User_Input *input) POST_CDECL;
 
 void fatal_error(char *string);
 
