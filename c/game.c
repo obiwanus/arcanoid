@@ -26,7 +26,7 @@ bool ButtonWasDown(User_Input *input, Input_Button button) {
 
 void AttachToBat(Ball *ball, Bat *bat, Pixel_Buffer *screen) {
   ball->x = bat->left + ball->attached_x;
-  ball->y = screen->height - (bat->bottom + bat->height + ball->radius / 2) - 1;
+  ball->y = screen->height - (bat->bottom + bat->height + ball->radius / 2) - 3;
 }
 
 void CreateLevels(Level *levels) {
@@ -222,115 +222,6 @@ void ReleaseBalls(Program_State *state) {
   }
 }
 
-void MoveBat(Pixel_Buffer *screen, Program_State *state, User_Input *input) {
-  Bat *bat = &state->bat;
-
-  // Erase first
-  DrawBat(screen, bat, BG_COLOR);
-
-  // Check buffs
-  {
-    if (BuffActivated(state, Buff_Enlarge)) {
-      bat->width = 2 * DEFAULT_BAT_WIDTH;
-      bat->left -= DEFAULT_BAT_WIDTH / 2;
-      if (bat->left < WALL_SIZE) {
-        bat->left = WALL_SIZE;
-      }
-      state->active_buffs[Buff_Shrink] = 0;  // cancel shrink if present
-    } else if (BuffDeactivated(state, Buff_Enlarge)) {
-      bat->width = DEFAULT_BAT_WIDTH;
-      bat->left += DEFAULT_BAT_WIDTH / 2;
-      const int kMaxLeft = screen->width - WALL_SIZE - bat->width;
-      if (bat->left > kMaxLeft) {
-        bat->left = kMaxLeft;
-      }
-      ReleaseBalls(state);
-    }
-    if (BuffActivated(state, Buff_Shrink)) {
-      bat->width = DEFAULT_BAT_WIDTH / 2;
-      bat->left += DEFAULT_BAT_WIDTH / 4;
-      state->active_buffs[Buff_Enlarge] = 0;  // cancel enlarge if present
-      ReleaseBalls(state);
-    } else if (BuffDeactivated(state, Buff_Shrink)) {
-      bat->width = DEFAULT_BAT_WIDTH;
-      bat->left += DEFAULT_BAT_WIDTH / 4;
-      const int kMaxLeft = screen->width - WALL_SIZE - bat->width;
-      if (bat->left > kMaxLeft) {
-        bat->left = kMaxLeft;
-      }
-    }
-    // Release balls on deactivation
-    if (BuffDeactivated(state, Buff_Sticky)) {
-      ReleaseBalls(state);
-    }
-    // Only activate multi ball once
-    if (BuffActivated(state, Buff_MultiBall)) {
-      state->active_buffs[Buff_MultiBall] = 0;  // deactivate immediately
-      if (state->ball_count < MAX_BALLS - 2) {
-        Ball *ball = GetFirstBall(state, true);  // get active ball
-        assert(ball != NULL);
-        Ball *left_ball = GetFirstBall(state, false);
-        assert(left_ball != NULL);
-        *left_ball = *ball;
-        Ball *right_ball = GetFirstBall(state, false);
-        assert(right_ball != NULL);
-        *right_ball = *ball;
-        const int kSpeedModifier = -10;
-        left_ball->speed.x -= kSpeedModifier;
-        right_ball->speed.x += kSpeedModifier;
-        left_ball->speed = Scale(Normalize(left_ball->speed), Length(ball->speed));
-        right_ball->speed = Scale(Normalize(right_ball->speed), Length(ball->speed));
-        state->ball_count += 2;
-      }
-    }
-    if (BuffActivated(state, Buff_Gun)) {
-      state->active_buffs[Buff_Gun] = BUFF_TTL / 3;  // reduce buff time
-      state->bat.can_shoot = true;
-    } else if (BuffDeactivated(state, Buff_Gun)) {
-      state->bat.can_shoot = false;
-    }
-    if (BuffActivated(state, Buff_PowerBall)) {
-      state->active_buffs[Buff_PowerBall] = BUFF_TTL / 6;  // reduce buff time
-    }
-  }
-
-  // Move
-  float move = 0;
-  if (ButtonIsDown(input, IB_left)) {
-    move -= BAT_MOVE_STEP;
-  }
-  if (ButtonIsDown(input, IB_right)) {
-    move += BAT_MOVE_STEP;
-  }
-  const int kLeft = WALL_SIZE, kRight = screen->width - WALL_SIZE;
-  bat->left += move;
-  if (bat->left < kLeft) {
-    bat->left = kLeft;
-  }
-  if (bat->left + bat->width > kRight) {
-    bat->left = kRight - bat->width;
-  }
-
-  // Shoot
-  if (bat->can_shoot && ButtonIsDown(input, IB_space) && state->bullet_cooldown == 0) {
-    Rect gun1, gun2;
-    GetGunRects(screen, bat, &gun1, &gun2);
-
-    Bullet *bullet1 = GetAvailableBullet(state);
-    bullet1->y = gun1.top;
-    Bullet *bullet2 = GetAvailableBullet(state);
-    bullet2->y = gun2.top;
-    bullet1->x = gun1.left;
-    bullet2->x = gun2.left;
-
-    state->bullets_in_flight += 2;
-    state->bullet_cooldown = BULLET_COOLDOWN;
-  }
-
-  // Redraw
-  DrawBat(screen, bat, bat->color);
-}
-
 bool RectsIntersect(Rect r1, Rect r2) {
   int r1_right = r1.left + r1.width;
   int r2_right = r2.left + r2.width;
@@ -401,7 +292,7 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
     {
       Bat *bat = &state->bat;
       const float kBMargin = 2.0f,  // to shrink the collision rect
-                  kBLeft = bat->left - ball->radius + kBMargin,
+          kBLeft = bat->left - ball->radius + kBMargin,
                   kBRight = bat->left + bat->width + ball->radius - kBMargin,
                   kBBottom = screen->height - bat->bottom,
                   kBTop = kBBottom - bat->height - ball->radius,
@@ -497,7 +388,7 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
             Buff *buff = state->buffs + next_available_buff;
 
             // Init new buff
-            buff->type = (Buff_Type)((rand() % (Buff__COUNT - 1)) + 1);
+            buff->type = (Buff_Type)((rand() % (Buff_Type__COUNT - 1)) + 1);
             buff->position = V2(brick_rect.left, brick_rect.top);
           }
         }
@@ -733,7 +624,7 @@ bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state, User_Input *inp
     for (int i = 0; i < MAX_BUFFS; ++i) {
       state->buffs[i].type = Buff_Inactive;
     }
-    for (int i = 0; i < Buff__COUNT; ++i) {
+    for (int i = 0; i < Buff_Type__COUNT; ++i) {
       state->active_buffs[i] = 0;
     }
 
@@ -769,7 +660,111 @@ bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state, User_Input *inp
     ReleaseBalls(state);
   }
 
-  MoveBat(screen, state, input);
+  // Update bat
+  {
+    // Erase first
+    DrawBat(screen, bat, BG_COLOR);
+
+    // Check buffs
+    {
+      if (BuffActivated(state, Buff_Enlarge)) {
+        bat->width = 2 * DEFAULT_BAT_WIDTH;
+        bat->left -= DEFAULT_BAT_WIDTH / 2;
+        if (bat->left < WALL_SIZE) {
+          bat->left = WALL_SIZE;
+        }
+        state->active_buffs[Buff_Shrink] = 0;  // cancel shrink if present
+      } else if (BuffDeactivated(state, Buff_Enlarge)) {
+        bat->width = DEFAULT_BAT_WIDTH;
+        bat->left += DEFAULT_BAT_WIDTH / 2;
+        const int kMaxLeft = screen->width - WALL_SIZE - bat->width;
+        if (bat->left > kMaxLeft) {
+          bat->left = kMaxLeft;
+        }
+        ReleaseBalls(state);
+      }
+      if (BuffActivated(state, Buff_Shrink)) {
+        bat->width = DEFAULT_BAT_WIDTH / 2;
+        bat->left += DEFAULT_BAT_WIDTH / 4;
+        state->active_buffs[Buff_Enlarge] = 0;  // cancel enlarge if present
+        ReleaseBalls(state);
+      } else if (BuffDeactivated(state, Buff_Shrink)) {
+        bat->width = DEFAULT_BAT_WIDTH;
+        bat->left += DEFAULT_BAT_WIDTH / 4;
+        const int kMaxLeft = screen->width - WALL_SIZE - bat->width;
+        if (bat->left > kMaxLeft) {
+          bat->left = kMaxLeft;
+        }
+      }
+      // Release balls on deactivation
+      if (BuffDeactivated(state, Buff_Sticky)) {
+        ReleaseBalls(state);
+      }
+      // Only activate multi ball once
+      if (BuffActivated(state, Buff_MultiBall)) {
+        state->active_buffs[Buff_MultiBall] = 0;  // deactivate immediately
+        if (state->ball_count < MAX_BALLS - 2) {
+          Ball *ball = GetFirstBall(state, true);  // get active ball
+          assert(ball != NULL);
+          Ball *left_ball = GetFirstBall(state, false);
+          assert(left_ball != NULL);
+          *left_ball = *ball;
+          Ball *right_ball = GetFirstBall(state, false);
+          assert(right_ball != NULL);
+          *right_ball = *ball;
+          left_ball->speed.x -= 10;
+          right_ball->speed.x += 10;
+          left_ball->speed = Scale(Normalize(left_ball->speed), Length(ball->speed));
+          right_ball->speed = Scale(Normalize(right_ball->speed), Length(ball->speed));
+          state->ball_count += 2;
+        }
+      }
+      if (BuffActivated(state, Buff_Gun)) {
+        state->active_buffs[Buff_Gun] = BUFF_TTL / 3;  // reduce buff time
+        state->bat.can_shoot = true;
+      } else if (BuffDeactivated(state, Buff_Gun)) {
+        state->bat.can_shoot = false;
+      }
+      if (BuffActivated(state, Buff_PowerBall)) {
+        state->active_buffs[Buff_PowerBall] = BUFF_TTL / 6;  // reduce buff time
+      }
+    }
+
+    // Move
+    const int kBatMaxLeft = WALL_SIZE, kBatMaxRight = screen->width - WALL_SIZE;
+    if (ButtonIsDown(input, IB_left)) {
+      bat->left -= BAT_MOVE_STEP;
+    }
+    if (ButtonIsDown(input, IB_right)) {
+      bat->left += BAT_MOVE_STEP;
+    }
+    if (bat->left < kBatMaxLeft) {
+      bat->left = kBatMaxLeft;
+    }
+    if (bat->left + bat->width > kBatMaxRight) {
+      bat->left = kBatMaxRight - bat->width;
+    }
+
+    // Shoot
+    if (bat->can_shoot && ButtonIsDown(input, IB_space) && state->bullet_cooldown == 0) {
+      Rect gun1, gun2;
+      GetGunRects(screen, bat, &gun1, &gun2);
+
+      Bullet *bullet1 = GetAvailableBullet(state);
+      bullet1->y = gun1.top;
+      Bullet *bullet2 = GetAvailableBullet(state);
+      bullet2->y = gun2.top;
+      bullet1->x = gun1.left;
+      bullet2->x = gun2.left;
+
+      state->bullets_in_flight += 2;
+      state->bullet_cooldown = BULLET_COOLDOWN;
+    }
+
+    // Redraw
+    DrawBat(screen, bat, bat->color);
+  }
+
   MoveBalls(screen, state);
 
   DrawBricks(screen, state->bricks);
@@ -781,7 +776,7 @@ bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state, User_Input *inp
   }
 
   // Decrement all buffs
-  for (int i = 0; i < Buff__COUNT; ++i) {
+  for (int i = 0; i < Buff_Type__COUNT; ++i) {
     if (state->active_buffs[i] > 0) {
       state->active_buffs[i]--;
     }

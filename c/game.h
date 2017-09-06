@@ -89,7 +89,7 @@ typedef enum Buff_Type {
   Buff_PowerBall,
   Buff_Gun,
   Buff_BottomWall,
-  Buff__COUNT,
+  Buff_Type__COUNT,
 } Buff_Type;
 
 typedef struct Buff {
@@ -122,7 +122,7 @@ typedef struct Program_State {
   int falling_buffs;
   int bullet_cooldown;
   int bullets_in_flight;
-  int active_buffs[Buff__COUNT];  // stores time to live
+  int active_buffs[Buff_Type__COUNT];  // stores time to live
   Bat bat;
   Level levels[MAX_LEVELS];
   Ball balls[MAX_BALLS];
