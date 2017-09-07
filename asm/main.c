@@ -86,6 +86,11 @@ void CreateLevels(Level *levels) {
   assert(level == MAX_LEVELS);
 }
 
+void DrawPixel(Pixel_Buffer *screen, int x, int y, u32 color) {
+  u32 *pixel = screen->pixels + screen->width * y + x;
+  *pixel = color;
+}
+
 int main(int argc, char *argv[]) {
   Display *display;
   Window window;

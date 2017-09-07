@@ -12,7 +12,7 @@ g_input         resd    1
 ; --------------------------------------------------------
 segment .text
 global  update_and_render
-extern  draw_rect
+extern  draw_rect, draw_pixel
 
 ; update_and_render(
 ;       Pixel_Buffer *screen,
@@ -37,6 +37,11 @@ update_and_render:
         mov eax, [ebp + 16]
         mov [g_input], eax
 
+        push dword 0x00FFFFFF           ; color
+        push dword 300                  ; y
+        push dword 200                  ; x
+        call draw_pixel
+        add esp, 12
 
 ; END ----------------------------------------------------
 

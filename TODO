@@ -1,10 +1,13 @@
 
 - ASM:
 
-- Draw something on the screen using asm
+- Draw a rect on the screen
 
 ========================================================================
 DONE:
+
+8 Sep 2017
+- Draw a pixel on the screen using asm
 
 7 Sep 2017
 - Some refactoring
