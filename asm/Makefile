@@ -4,7 +4,7 @@
 appname := arcanoid
 
 AS := nasm
-ASFLAGS := -f elf -d ELF_TYPE
+ASFLAGS := -f elf -d ELF_TYPE -g
 CC := clang
 CFLAGS := -g -std=c11 -m32 -Wall -Wconversion
 LDLIBS := -lX11 -lm -ldl
