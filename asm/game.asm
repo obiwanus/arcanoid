@@ -38,10 +38,12 @@ update_and_render:
         mov [g_input], eax
 
         push dword 0x00FFFFFF           ; color
-        push dword 300                  ; y
-        push dword 200                  ; x
-        call draw_pixel
-        add esp, 12
+        push dword 100                  ; height
+        push dword 150                  ; width
+        push dword 100                  ; top
+        push dword 100                  ; left
+        call draw_rect
+        add esp, 20                     ; remove parameters
 
 ; END ----------------------------------------------------
 
