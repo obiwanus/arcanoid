@@ -41,7 +41,7 @@ update_and_render:
         push dword 100                  ; height
         push dword 150                  ; width
         push dword 100                  ; top
-        push dword 100                  ; left
+        push dword -10                  ; left
         call draw_rect
         add esp, 20                     ; remove parameters
 

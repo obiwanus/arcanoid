@@ -25,8 +25,12 @@ draw_rect:
         add eax, [ebp + 20]             ; eax = top + height
         mov [ebp - 8], eax              ; bottom
 
-        ; Bounds check
+        ; Bounds check (xxx: is there an easy way to avoid branches?)
         cmp dword [ebp + 8], 0          ; left < 0 ?
+        setge eax                       ; ebx = (left >= 0) ? 1 : 0
+        neg eax                         ; ebx = (left >= 0) ? 0xFF.. : 0
+        and [ebp + 8], eax              ; left = (left >= 0) ? left : 0
+        ; cmp dword [ebp + 12], 0         ;
 
 
         ; Drawing loop
@@ -42,7 +46,7 @@ draw_rect_for_x:
         ; Draw pixel
         mov [edx + 4 * edi], eax
 
-        ; inc edi
+        inc edi
         inc ecx
         cmp ecx, [ebp - 4]              ; x < right ?
         jl draw_rect_for_x
