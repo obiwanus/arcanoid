@@ -37,7 +37,7 @@ update_and_render:
         mov eax, [ebp + 16]
         mov [g_input], eax
 
-        push dword 0x00FFFFFF           ; color
+        push dword 0x0066AACC           ; color
         push dword 100                  ; height
         push dword 150                  ; width
         push dword 100                  ; top

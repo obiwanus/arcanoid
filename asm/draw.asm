@@ -16,6 +16,7 @@ draw_rect:
         sub esp, 8                      ; 2 local vars
         pusha
 
+        ; Init local vars
         mov eax, [ebp + 8]              ; eax = left
         add eax, [ebp + 16]             ; eax = left + width
         mov [ebp - 4], eax              ; right
@@ -24,12 +25,16 @@ draw_rect:
         add eax, [ebp + 20]             ; eax = top + height
         mov [ebp - 8], eax              ; bottom
 
-        ; TODO: bounds check
+        ; Bounds check
+        cmp dword [ebp + 8], 0          ; left < 0 ?
 
+
+        ; Drawing loop
         mov ebx, [ebp + 12]             ; ebx (y) = top
 draw_rect_for_y:
         mov ecx, [ebp + 8]              ; ecx (x) = left
 draw_rect_for_x:
+        ; calling draw_pixel
         push dword [ebp + 24]           ; color
         push ebx                        ; y
         push ecx                        ; x
@@ -56,15 +61,13 @@ draw_pixel:
         mov ebp, esp
         pusha
 
-        mov eax, [g_width]              ; eax to store offset
-        mul dword [ebp + 12]            ; eax = width * y
-        add eax, [ebp + 8]              ; eax += x
-        sal eax, 2                      ; each pixel 4 bytes
-        mov ebx, [g_pixels]
-        add ebx, eax                    ; ebx = &pixel
+        mov ecx, [g_width]              ; ecx to store pixel offset
+        imul ecx, [ebp + 12]            ; ecx = width * y
+        add ecx, [ebp + 8]              ; ecx += x
 
-        mov eax, [ebp + 16]
-        mov [ebx], eax                  ; *pixel = color
+        mov eax, [ebp + 16]             ; eax is color
+        mov ebx, [g_pixels]             ; base pixel pointer
+        mov [ebx + 4 * ecx], eax        ; *pixel = color
 
         popa
         mov esp, ebp
