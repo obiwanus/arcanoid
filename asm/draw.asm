@@ -30,17 +30,19 @@ draw_rect:
 
 
         ; Drawing loop
+        mov eax, [ebp + 24]             ; color
+        mov edx, [g_pixels]             ; base pixel address
         mov ebx, [ebp + 12]             ; ebx (y) = top
 draw_rect_for_y:
         mov ecx, [ebp + 8]              ; ecx (x) = left
+        mov edi, [g_width]              ; edi = current pixel offset
+        imul edi, ebx
+        add edi, ecx
 draw_rect_for_x:
-        ; calling draw_pixel
-        push dword [ebp + 24]           ; color
-        push ebx                        ; y
-        push ecx                        ; x
-        call draw_pixel
-        add esp, 12
+        ; Draw pixel
+        mov [edx + 4 * edi], eax
 
+        ; inc edi
         inc ecx
         cmp ecx, [ebp - 4]              ; x < right ?
         jl draw_rect_for_x
