@@ -38,9 +38,9 @@ update_and_render:
         mov [g_input], eax
 
         push dword 0x0066AACC           ; color
-        push dword 100                  ; height
-        push dword 150                  ; width
-        push dword 100                  ; top
+        push dword 800                  ; height
+        push dword 600                  ; width
+        push dword -20                  ; top
         push dword -10                  ; left
         call draw_rect
         add esp, 20                     ; remove parameters

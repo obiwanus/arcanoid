@@ -25,13 +25,38 @@ draw_rect:
         add eax, [ebp + 20]             ; eax = top + height
         mov [ebp - 8], eax              ; bottom
 
-        ; Bounds check (xxx: is there an easy way to avoid branches?)
+        ; Bounds check
+        xor ebx, ebx                    ; ebx = 0
         cmp dword [ebp + 8], 0          ; left < 0 ?
-        setge eax                       ; ebx = (left >= 0) ? 1 : 0
-        neg eax                         ; ebx = (left >= 0) ? 0xFF.. : 0
-        and [ebp + 8], eax              ; left = (left >= 0) ? left : 0
-        ; cmp dword [ebp + 12], 0         ;
+        setge bl                        ; ebx = (left >= 0) ? 1 : 0
+        neg ebx                         ; ebx = (left >= 0) ? 0xFF.. : 0
+        and [ebp + 8], ebx              ; left = (left >= 0) ? left : 0
 
+        xor ebx, ebx                    ; ebx = 0
+        cmp dword [ebp + 12], 0         ; top < 0 ?
+        setge bl                        ; ebx = (top >= 0) ? 1 : 0
+        neg ebx                         ; ebx = (top >= 0) ? 0xFF.. : 0
+        and [ebp + 12], ebx             ; top = (top >= 0) ? top : 0
+
+        xor ebx, ebx
+        mov ecx, [g_width]
+        cmp [ebp - 4], ecx              ; right < screen->width ?
+        setl bl                         ; ebx = (right < width) ? 1 : 0
+        neg ebx                         ; ebx = (right < width) ? 0xFF.. : 0
+        and [ebp - 4], ebx              ; right = (right < width) ? right : 0
+        not ebx                         ; ebx = (right < width) ? 0 : 0xFF..
+        and ecx, ebx                    ; ecx = (right < width) ? 0 : width
+        add [ebp - 4], ecx              ; right = (right < width) ? right : width
+
+        xor ebx, ebx
+        mov ecx, [g_height]
+        cmp [ebp - 8], ecx              ; bottom < screen->height ?
+        setl bl                         ; ebx = (bottom < height) ? 1 : 0
+        neg ebx                         ; ebx = (bottom < height) ? 0xFF.. : 0
+        and [ebp - 8], ebx              ; bottom = (bottom < height) ? bottom : 0
+        not ebx                         ; ebx = (bottom < height) ? 0 : 0xFF..
+        and ecx, ebx                    ; ecx = (bottom < height) ? 0 : height
+        add [ebp - 8], ecx              ; bottom = (bottom < height) ? bottom : height
 
         ; Drawing loop
         mov eax, [ebp + 24]             ; color
