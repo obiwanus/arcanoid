@@ -12,7 +12,7 @@ g_input         resd    1
 ; --------------------------------------------------------
 segment .text
 global  update_and_render
-extern  draw_rect, draw_pixel
+extern  draw_rect, draw_pixel, draw_circle
 
 ; update_and_render(
 ;       Pixel_Buffer *screen,
@@ -38,12 +38,19 @@ update_and_render:
         mov [g_input], eax
 
         push dword 0x0066AACC           ; color
-        push dword 800                  ; height
-        push dword 600                  ; width
-        push dword -20                  ; top
-        push dword -10                  ; left
+        push dword 100                  ; height
+        push dword 150                  ; width
+        push dword 100                  ; top
+        push dword 100                  ; left
         call draw_rect
         add esp, 20                     ; remove parameters
+
+        push dword 0x00AA66CC           ; color
+        push float 20.0                 ; radius
+        push float 300.0                ; Y
+        push float 200.0                ; X
+        call draw_circle
+        add esp, 16                     ; remove parameters
 
 ; END ----------------------------------------------------
 

@@ -6,7 +6,7 @@ extern g_pixels, g_width, g_height
 
 ; --------------------------------------------------------
 segment .text
-global  draw_rect, draw_pixel
+global  draw_rect, draw_pixel, draw_circle
 
 ; ========================================================
 ; draw_rect(Rect rect, u32 color)
@@ -99,6 +99,21 @@ draw_pixel:
         mov eax, [ebp + 16]             ; eax is color
         mov ebx, [g_pixels]             ; base pixel pointer
         mov [ebx + 4 * ecx], eax        ; *pixel = color
+
+        popa
+        mov esp, ebp
+        pop ebp
+        ret
+
+
+; ========================================================
+; draw_circle(float x, float y, float radius, u32 color)
+draw_circle:
+        push ebp
+        mov ebp, esp
+        pusha
+
+
 
         popa
         mov esp, ebp

@@ -1,13 +1,21 @@
 
-- ASM:
+ASM:
 
-- Bounds check on draw rect
+- Draw circle
+- Draw level
+- Draw bat
+- Move bat
+
+C:
+
+- Change ball color on powerball
+- Change bat color on sticky
 
 ========================================================================
 DONE:
 
 10 Sep 2017
--
+- Bounds check on draw rect
 
 9 Sep 2017
 - Draw a rect on the screen
