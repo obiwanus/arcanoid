@@ -57,7 +57,6 @@ typedef struct Ball {
   bool attached;
   float attached_x;
   float radius;
-  u32 color;
   float x;
   float y;
   v2 speed;
@@ -123,6 +122,7 @@ typedef struct Program_State {
   int bullet_cooldown;
   int bullets_in_flight;
   int active_buffs[Buff_Type__COUNT];  // stores time to live
+  u32 ball_color;
   Bat bat;
   Level levels[MAX_LEVELS];
   Ball balls[MAX_BALLS];

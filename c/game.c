@@ -398,7 +398,7 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
     }
 
     // Redraw
-    DrawCircle(screen, ball->x, ball->y, ball->radius, ball->color);
+    DrawCircle(screen, ball->x, ball->y, ball->radius, state->ball_color);
   }
 }
 
@@ -429,22 +429,22 @@ void UpdateBuffs(Pixel_Buffer *screen, Program_State *state) {
         color = 0x00F3B191;
       } break;
       case Buff_Shrink: {
-        color = 0x00AA0100;
+        color = 0x00FF0000;
       } break;
       case Buff_Sticky: {
-        color = 0x00F311F1;
+        color = 0x0099D622;
       } break;
       case Buff_MultiBall: {
         color = 0x004433FF;
       } break;
       case Buff_PowerBall: {
-        color = 0x0033F199;
+        color = 0x00FFFF44;
       } break;
       case Buff_Gun: {
-        color = 0x0088FF22;
+        color = 0x0088CCCC;
       } break;
       case Buff_BottomWall: {
-        color = 0x0099D622;
+        color = 0x00555555;
       } break;
       default: { fatal_error("Unknown buff type"); } break;
     }
@@ -591,7 +591,6 @@ bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state, User_Input *inp
     for (int i = 0; i < MAX_BALLS; ++i) {
       Ball *ball = state->balls + i;
       ball->radius = 8.f;
-      ball->color = 0x00FFFFFF;
       ball->speed.x = 1;
       ball->speed.y = -1;
       ball->speed = Scale(Normalize(ball->speed), START_BALL_SPEED);
@@ -601,6 +600,7 @@ bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state, User_Input *inp
 
     // Activate and attach main ball
     state->ball_count = 1;
+    state->ball_color = 0x00FFFFFF;
     Ball *main_ball = &state->balls[0];
     main_ball->active = true;
     main_ball->attached = true;
@@ -697,7 +697,10 @@ bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state, User_Input *inp
         }
       }
       // Release balls on deactivation
-      if (BuffDeactivated(state, Buff_Sticky)) {
+      if (BuffActivated(state, Buff_Sticky)) {
+        bat->color = 0x0099D622;
+      } else if (BuffDeactivated(state, Buff_Sticky)) {
+        bat->color = 0x00FFFFFF;
         ReleaseBalls(state);
       }
       // Only activate multi ball once
@@ -727,6 +730,9 @@ bool UpdateAndRender(Pixel_Buffer *screen, Program_State *state, User_Input *inp
       }
       if (BuffActivated(state, Buff_PowerBall)) {
         state->active_buffs[Buff_PowerBall] = BUFF_TTL / 6;  // reduce buff time
+        state->ball_color = 0x00FFFF44;
+      } else if (BuffDeactivated(state, Buff_PowerBall)) {
+        state->ball_color = 0x00FFFFFF;
       }
     }
 

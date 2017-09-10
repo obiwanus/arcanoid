@@ -45,6 +45,9 @@ update_and_render:
         call draw_rect
         add esp, 20                     ; remove parameters
 
+
+        ; TODO: use fld (gcc-like)
+
         push dword 0x00AA66CC           ; color
         push float 20.0                 ; radius
         push float 300.0                ; Y
