@@ -62,22 +62,22 @@ draw_rect:
         mov eax, [ebp + 24]             ; color
         mov edx, [g_pixels]             ; base pixel address
         mov ebx, [ebp + 12]             ; ebx (y) = top
-draw_rect_for_y:
+.for_y:
         mov ecx, [ebp + 8]              ; ecx (x) = left
         mov edi, [g_width]              ; edi = current pixel offset
         imul edi, ebx
         add edi, ecx
-draw_rect_for_x:
+.for_x:
         ; Draw pixel
         mov [edx + 4 * edi], eax
 
         inc edi
         inc ecx
         cmp ecx, [ebp - 4]              ; x < right ?
-        jl draw_rect_for_x
+        jl .for_x
         inc ebx
         cmp ebx, [ebp - 8]              ; y < bottom ?
-        jl draw_rect_for_y
+        jl .for_y
 
         popa
         mov esp, ebp
@@ -107,13 +107,86 @@ draw_pixel:
 
 
 ; ========================================================
-; draw_circle(float x, float y, float radius, u32 color)
+; draw_circle(float X, float Y, float radius, u32 color)
 draw_circle:
+        %push draw_circle_ctx
+        %stacksize flat
+        %arg X:dword, Y:dword, radius:dword, color:dword
+        %assign %$localsize 0
+        %local left:dword, right:dword, top:dword, bottom:dword, x:dword, y:dword
         push ebp
         mov ebp, esp
+        sub esp, 24
         pusha
 
+        fld dword [X]
+        fsub dword [radius]             ; st0 = X - radius
+        fstp dword [left]               ; left = X - radius
 
+        fld dword [X]
+        fadd dword [radius]             ; st0 = X + radius
+        fstp dword [right]              ; right = X + radius
+
+        fld dword [Y]
+        fsub dword [radius]             ; st0 = Y - radius
+        fstp dword [top]                ; top = Y - radius
+
+        fld dword [Y]
+        fadd dword [radius]             ; st0 = Y + radius
+        fstp dword [bottom]             ; bottom = Y + radius
+
+        ; TODO: bounds check
+
+
+        ; Drawing loop
+        fld dword [top]
+        fstp dword [y]
+.for_y:
+        fld dword [left]
+        fstp dword [x]
+.for_x:
+        fld dword [x]
+        fsub dword [X]
+        fmul st0                        ; st0 = (x - X) ^ 2
+        fld dword [y]
+        fsub dword [Y]
+        fmul st0                        ; st0 = (y - Y) ^ 2
+        fadd st1                        ; st0 = sq_distance
+        ffree st1
+        fld dword [radius]
+        fmul st0                        ; st0 = radius * radius
+        fcompp                          ; sq_radius > sq_distance ?
+        fstsw ax
+        sahf
+        jle .skip_pixel
+        ; draw pixel
+        push dword [color]
+        push dword 0                    ; placeholder for y
+        push dword 0                    ; placeholder for x
+        fld dword [x]
+        fistp dword [esp + 4]           ; fill in x
+        fld dword [y]
+        fistp dword [esp + 8]           ; fill in y
+        call draw_pixel
+        add esp, 12
+.skip_pixel:
+        fld dword [x]
+        fld1
+        faddp st1                       ; st0 = x + 1
+        fst dword [x]                   ; x = x + 1
+        fcomp dword [right]             ; x <= right ?
+        fstsw ax
+        sahf
+        jle .for_x
+        fld dword [y]
+        fld1
+        fst dword [y]                   ; increment y
+        fcomp dword [bottom]            ; y <= bottom ?
+        fstsw ax
+        sahf
+        jle .for_y
+
+        %pop
 
         popa
         mov esp, ebp

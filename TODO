@@ -6,6 +6,8 @@ ASM:
 - Draw bat
 - Move bat
 
+- Use SIMD to draw
+
 C:
 
 - Change ball color on powerball

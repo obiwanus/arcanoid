@@ -45,13 +45,17 @@ update_and_render:
         call draw_rect
         add esp, 20                     ; remove parameters
 
-
-        ; TODO: use fld (gcc-like)
-
         push dword 0x00AA66CC           ; color
-        push float 20.0                 ; radius
-        push float 300.0                ; Y
-        push float 200.0                ; X
+        push dword 20                   ; radius
+        push dword 300                  ; Y
+        push dword 100                  ; X
+        ; convert params to float
+        fild dword [esp + 12]           ; load radius
+        fild dword [esp + 8]            ; load Y
+        fild dword [esp + 4]            ; load X
+        fstp dword [esp + 4]
+        fstp dword [esp + 8]
+        fstp dword [esp + 12]
         call draw_circle
         add esp, 16                     ; remove parameters
 
