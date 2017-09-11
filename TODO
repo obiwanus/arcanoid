@@ -9,8 +9,6 @@ ASM:
 
 C:
 
-- Change ball color on powerball
-- Change bat color on sticky
 
 ========================================================================
 DONE:
@@ -18,6 +16,10 @@ DONE:
 12 Sep 2017
 - Exit on escape
 - Draw circle
+
+11 Sep 2017
+- Change ball color on powerball
+- Change bat color on sticky
 
 10 Sep 2017
 - Bounds check on draw rect

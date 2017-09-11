@@ -146,12 +146,7 @@ int main(int argc, char *argv[]) {
   User_Input *new_input = &inputs[1];
   *new_input = (const User_Input){};
 
-  // Init program state
   srand((unsigned)LinuxGetWallClock());
-  Program_State state = {0};
-  CreateLevels(state.levels);
-  state.level_initialised = false;
-  state.current_level = 0;
 
   // Main loop
   g_running = true;
@@ -244,7 +239,7 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    bool result = update_and_render(&pixel_buffer, &state, new_input);
+    bool result = update_and_render(&pixel_buffer, new_input);
     if (!result) {
       g_running = false;
     }

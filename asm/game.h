@@ -144,7 +144,7 @@ typedef struct Program_State {
 #define POST_CDECL
 #endif
 
-int PRE_CDECL update_and_render(Pixel_Buffer *screen, Program_State *state, User_Input *input) POST_CDECL;
+int PRE_CDECL update_and_render(Pixel_Buffer *screen, User_Input *input) POST_CDECL;
 
 void fatal_error(char *string);
 

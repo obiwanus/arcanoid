@@ -1,6 +1,7 @@
-%include 'input.asm.inc'
+%include 'game.inc'
 ; --------------------------------------------------------
 segment .data
+g_level_initialised     dd      0
 ; --------------------------------------------------------
 segment .bss
 global g_pixels, g_width, g_height, g_state, g_input
@@ -9,6 +10,18 @@ g_width         resd    1
 g_height        resd    1
 g_state         resd    1
 g_input         resd    1
+
+g_ball_count            resd    1
+g_current_level         resd    1
+g_falling_buffs         resd    1
+g_bullet_cooldown       resd    1
+g_bullets_in_flight     resd    1
+g_active_buffs          resd    Buff_Type__COUNT
+g_levels                resd    MAX_LEVELS
+g_balls                 resd    8 * MAX_BALLS  ; 8 dwords is struct size
+g_bricks                resd    BRICKS_TOTAL
+g_buffs                 resd    3 * MAX_BUFFS
+g_bullets               resd    2 * MAX_BULLETS
 
 ; --------------------------------------------------------
 segment .text
@@ -34,13 +47,17 @@ update_and_render:
         mov ebx, [eax + 8]
         mov [g_height], ebx
         mov eax, [ebp + 12]
-        mov [g_state], eax
-        mov eax, [ebp + 16]
         mov [g_input], eax
 
         ; Check exit condition
         button_is_down IB_escape
         je program_end
+
+        mov eax, [g_level_initialised]
+        not eax
+
+
+
 
         push dword 0x0066AACC           ; color
         push dword 100                  ; height
@@ -78,3 +95,16 @@ program_end:
         leave
         ret
 
+
+
+; init_level()
+init_level:
+        mov ebp, esp
+        push esp
+        pusha
+
+
+
+        popa
+        leave
+        ret
