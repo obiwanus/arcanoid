@@ -50,12 +50,12 @@ update_and_render:
         push dword 300                  ; Y
         push dword 100                  ; X
         ; convert params to float
-        fild dword [esp + 12]           ; load radius
-        fild dword [esp + 8]            ; load Y
-        fild dword [esp + 4]            ; load X
+        fild dword [esp + 8]            ; load radius
+        fild dword [esp + 4]            ; load Y
+        fild dword [esp]                ; load X
+        fstp dword [esp]
         fstp dword [esp + 4]
         fstp dword [esp + 8]
-        fstp dword [esp + 12]
         call draw_circle
         add esp, 16                     ; remove parameters
 

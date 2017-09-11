@@ -158,15 +158,15 @@ draw_circle:
         fcompp                          ; sq_radius > sq_distance ?
         fstsw ax
         sahf
-        jle .skip_pixel
+        jna .skip_pixel
         ; draw pixel
         push dword [color]
         push dword 0                    ; placeholder for y
         push dword 0                    ; placeholder for x
         fld dword [x]
-        fistp dword [esp + 4]           ; fill in x
+        fistp dword [esp]               ; fill in x
         fld dword [y]
-        fistp dword [esp + 8]           ; fill in y
+        fistp dword [esp + 4]           ; fill in y
         call draw_pixel
         add esp, 12
 .skip_pixel:
@@ -177,18 +177,18 @@ draw_circle:
         fcomp dword [right]             ; x <= right ?
         fstsw ax
         sahf
-        jle .for_x
+        jna .for_x
         fld dword [y]
         fld1
+        faddp st1
         fst dword [y]                   ; increment y
         fcomp dword [bottom]            ; y <= bottom ?
         fstsw ax
         sahf
-        jle .for_y
+        jna .for_y
 
         %pop
 
         popa
-        mov esp, ebp
-        pop ebp
+        leave
         ret
