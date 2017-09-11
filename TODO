@@ -1,7 +1,6 @@
 
 ASM:
 
-- Draw circle
 - Draw level
 - Draw bat
 - Move bat
@@ -15,6 +14,10 @@ C:
 
 ========================================================================
 DONE:
+
+12 Sep 2017
+- Exit on escape
+- Draw circle
 
 10 Sep 2017
 - Bounds check on draw rect

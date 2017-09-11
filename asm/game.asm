@@ -1,3 +1,4 @@
+%include 'input.asm.inc'
 ; --------------------------------------------------------
 segment .data
 ; --------------------------------------------------------
@@ -37,6 +38,10 @@ update_and_render:
         mov eax, [ebp + 16]
         mov [g_input], eax
 
+        ; Check exit condition
+        button_is_down IB_escape
+        je program_end
+
         push dword 0x0066AACC           ; color
         push dword 100                  ; height
         push dword 150                  ; width
@@ -61,9 +66,15 @@ update_and_render:
 
 ; END ----------------------------------------------------
 
+program_continue:
+        popa
+        mov eax, 1                      ; return true
+        leave
+        ret
+
 program_end:
         popa
-        mov eax, 1                      ; return back to C
+        mov eax, 0                      ; return false
         leave
         ret
 
