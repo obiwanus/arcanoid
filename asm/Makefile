@@ -14,7 +14,7 @@ objects  := $(patsubst %.asm, %.o, $(asmfiles))
 
 all: $(appname)
 
-%.o : %.asm main.o
+%.o : %.asm main.o *.inc
 	$(AS) $(ASFLAGS) $<
 
 $(appname): $(objects) main.o

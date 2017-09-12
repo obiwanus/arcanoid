@@ -12,8 +12,8 @@
 %define WALL_SIZE                5
 %define DEFAULT_BAT_WIDTH        70
 %define BAT_MOVE_STEP            6.0
-%define START_BALL_SPEED         4
-%define MAX_BALL_SPEED           8
+%xdefine START_BALL_SPEED        4
+%xdefine MAX_BALL_SPEED          8
 %define BULLET_COOLDOWN          20
 
 ; === Input
@@ -26,7 +26,7 @@
 %define IB_shift        5
 %define IB_escape       6
 
-%macro  button_is_down 1
+%macro button_is_down 1
         push eax
         mov eax, [g_input]
         add eax, %1
@@ -70,3 +70,26 @@
 %define Ball_x                  12
 %define Ball_y                  16
 %define Ball_speed              20      ; v2
+
+; === Vector macros
+
+%macro NORMALIZE 1
+        push eax
+        mov eax, %1
+        push eax
+        call length                     ; result in st0
+        add esp, 4
+
+        ; USE CORRECT INSTRUCTIONS
+
+        fdiv dword [eax + v2_x], st0    ; vector->x /= len
+        fdiv dword [eax + v2_y], st0    ; vector->y /= len
+
+
+        pop eax
+%endmacro
+
+
+%macro SCALE 2
+
+%endmacro

@@ -4,7 +4,14 @@ segment .data
 g_level_initialised     dd      0
 ; --------------------------------------------------------
 segment .bss
+
+; Export
 global g_pixels, g_width, g_height, g_state, g_input
+global g_ball_count, g_current_level, g_falling_buffs
+global g_bullet_cooldown, g_bullets_in_flight
+global g_active_buffs, g_levels, g_balls, g_bricks
+global g_buffs, g_bullets, g_bat
+
 g_pixels        resd    1
 g_width         resd    1
 g_height        resd    1
@@ -124,11 +131,13 @@ init_level:
         mov ecx, MAX_BALLS
         mov edx, g_balls
 .reset_balls:
+        mov byte  [edx + Ball_active], FALSE
+        mov byte  [edx + Ball_attached], FALSE
         mov dword [edx + Ball_radius], __float32__(8.0)
         mov dword [edx + Ball_speed + v2_x], __float32__(1.0)
         mov dword [edx + Ball_speed + v2_y], __float32__(-1.0)
-        mov byte  [edx + Ball_active], FALSE
-        mov byte  [edx + Ball_attached], FALSE
+        NORMALIZE [edx + Ball_speed]
+        SCALE [edx + Ball_speed], START_BALL_SPEED
         add edx, Ball_Struct_Size
         loop .reset_balls
 
