@@ -55,7 +55,6 @@ typedef struct Ball {
   bool attached;
   float attached_x;
   float radius;
-  u32 color;
   float x;
   float y;
   float speed_x;

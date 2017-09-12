@@ -18,16 +18,18 @@ g_bullet_cooldown       resd    1
 g_bullets_in_flight     resd    1
 g_active_buffs          resd    Buff_Type__COUNT
 g_levels                resd    MAX_LEVELS
-g_balls                 resd    8 * MAX_BALLS  ; 8 dwords is struct size
+g_balls                 resb    MAX_BALLS * Ball_Struct_Size
 g_bricks                resd    BRICKS_TOTAL
 g_buffs                 resd    3 * MAX_BUFFS
 g_bullets               resd    2 * MAX_BULLETS
+g_bat                   resd    6
 
 ; --------------------------------------------------------
 segment .text
 global  update_and_render
 extern  draw_rect, draw_pixel, draw_circle
 
+; ========================================================
 ; update_and_render(
 ;       Pixel_Buffer *screen,
 ;       Program_State *state,
@@ -53,11 +55,16 @@ update_and_render:
         button_is_down IB_escape
         je program_end
 
-        mov eax, [g_level_initialised]
-        not eax
-
-
-
+        ; if (!state->level_initialised || state->ball_count <= 0)
+        xor eax, eax
+        cmp dword [g_level_initialised], FALSE
+        sete al
+        cmp dword [g_ball_count], 0
+        setle ah
+        or al, ah
+        jz .level_is_ok
+        call init_level
+.level_is_ok:
 
         push dword 0x0066AACC           ; color
         push dword 100                  ; height
@@ -68,16 +75,9 @@ update_and_render:
         add esp, 20                     ; remove parameters
 
         push dword 0x00AA66CC           ; color
-        push dword 20                   ; radius
-        push dword 300                  ; Y
-        push dword 100                  ; X
-        ; convert params to float
-        fild dword [esp + 8]            ; load radius
-        fild dword [esp + 4]            ; load Y
-        fild dword [esp]                ; load X
-        fstp dword [esp]
-        fstp dword [esp + 4]
-        fstp dword [esp + 8]
+        push dword __float32__(20.0)    ; radius
+        push dword __float32__(300.0)   ; Y
+        push dword __float32__(100.0)   ; X
         call draw_circle
         add esp, 16                     ; remove parameters
 
@@ -96,14 +96,45 @@ program_end:
         ret
 
 
-
+; ========================================================
 ; init_level()
 init_level:
+        push ebp
         mov ebp, esp
-        push esp
         pusha
 
+        ; Clear screen
+        push dword 0x00662211
+        push dword [g_height]
+        push dword [g_width]
+        push dword 0
+        push dword 0
+        call draw_rect
+        add esp, 20
 
+        ; Init bat
+        mov dword [g_bat + Bat_left],   100
+        mov dword [g_bat + Bat_bottom], 20
+        mov dword [g_bat + Bat_width],  DEFAULT_BAT_WIDTH
+        mov dword [g_bat + Bat_height], 13
+        mov dword [g_bat + Bat_color],  0x00FFFFFF
+        mov dword [g_bat + Bat_can_shoot], FALSE
+
+        ; Reset all balls
+        mov ecx, MAX_BALLS
+        mov edx, g_balls
+.reset_balls:
+        mov dword [edx + Ball_radius], __float32__(8.0)
+        mov dword [edx + Ball_speed + v2_x], __float32__(1.0)
+        mov dword [edx + Ball_speed + v2_y], __float32__(-1.0)
+        mov byte  [edx + Ball_active], FALSE
+        mov byte  [edx + Ball_attached], FALSE
+        add edx, Ball_Struct_Size
+        loop .reset_balls
+
+
+        ; Mark as initialised
+        mov dword [g_level_initialised], TRUE
 
         popa
         leave

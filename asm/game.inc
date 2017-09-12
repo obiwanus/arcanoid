@@ -1,3 +1,6 @@
+%define TRUE    1
+%define FALSE   0
+
 %define MAX_BALLS                10
 %define MAX_LEVELS               3
 %define MAX_BUFFS                10
@@ -31,6 +34,11 @@
         pop eax
 %endmacro
 
+; === V2
+
+%define v2_x    0
+%define v2_y    4
+
 ; === Buffs
 
 %define Buff_Inactive           0
@@ -42,3 +50,23 @@
 %define Buff_Gun                6
 %define Buff_BottomWall         7
 %define Buff_Type__COUNT        8
+
+; === Bat
+
+%define Bat_left        0
+%define Bat_bottom      4
+%define Bat_width       8
+%define Bat_height      12
+%define Bat_color       16
+%define Bat_can_shoot   20
+
+; === Ball
+
+%define Ball_Struct_Size        28
+%define Ball_active             0
+%define Ball_attached           1
+%define Ball_attached_x         4
+%define Ball_radius             8
+%define Ball_x                  12
+%define Ball_y                  16
+%define Ball_speed              20      ; v2
