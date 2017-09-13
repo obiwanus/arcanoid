@@ -1,9 +1,9 @@
 
 ASM:
 
+- Draw balls
+- Move balls
 - Draw level
-- Draw bat
-- Move bat
 
 - Use SIMD to draw
 

@@ -93,6 +93,8 @@ update_and_render:
 
         call update_bat
 
+        call update_balls
+
 
 ; END ----------------------------------------------------
 
@@ -260,3 +262,27 @@ update_bat:
         %pop
 
 
+; ========================================================
+; update_balls()
+update_balls:
+        %push
+        %stacksize flat
+        ; %assign %$localsize 0
+        ; %local max_left:dword, max_right:dword
+        push ebp
+        mov ebp, esp
+        pusha
+
+        mov ecx, MAX_BALLS
+.for_each_ball:
+        push ecx
+
+        ; TODO: translate from right
+
+        pop ecx
+        loop .for_each_ball
+
+        popa
+        leave
+        ret
+        %pop
