@@ -8,7 +8,7 @@ segment .bss
 
 ; Export
 global g_pixels, g_width, g_height, g_state, g_input
-global g_ball_count, g_current_level, g_falling_buffs
+global g_ball_count, g_ball_color, g_current_level, g_falling_buffs
 global g_bullet_cooldown, g_bullets_in_flight
 global g_active_buffs, g_levels, g_balls, g_bricks
 global g_buffs, g_bullets, g_bat
@@ -20,6 +20,7 @@ g_state         resd    1
 g_input         resd    1
 
 g_ball_count            resd    1
+g_ball_color            resd    1
 g_current_level         resd    1
 g_falling_buffs         resd    1
 g_bullet_cooldown       resd    1
@@ -34,7 +35,7 @@ g_bat                   resd    6
 
 ; --------------------------------------------------------
 segment .text
-global  update_and_render
+global  update_and_render, attach_to_bat
 extern  draw_rect, draw_pixel, draw_circle
 
 ; ========================================================
@@ -142,10 +143,54 @@ init_level:
         add edx, Ball__SIZE
         loop .reset_balls
 
+        ; Activate and attach main ball
+        mov dword [g_ball_count], 1
+        mov dword [g_ball_color], 0x00FFFFFF
+        mov dword [g_balls + Ball_active], TRUE
+        mov dword [g_balls + Ball_attached], TRUE
+        mov eax, [g_bat + Bat_width]
+        sar eax, 1  ; divide by 2
+        add eax, 5  ; attached_x = bat->width / 2 + 5
+        mov dword [g_balls + Ball_attached_x], eax
+        push dword g_balls      ; pointer to main ball
+        call attach_to_bat
+        add esp, 4
 
         ; Mark as initialised
         mov dword [g_level_initialised], TRUE
 
+        popa
+        leave
+        ret
+
+
+; ========================================================
+; attach_to_bat(Ball *ball)
+attach_to_bat:
+        %push
+        %stacksize flat
+        %arg ball:dword
+        ; %assign %$localsize 0
+        ; %local left:dword, right:dword, top:dword, bottom:dword, x:dword, y:dword
+        push ebp
+        mov ebp, esp
+        pusha
+
+        mov eax, [ball]     ; took some time to figure out
+        mov ebx, [g_bat + Bat_left]
+        add ebx, [eax + Ball_attached_x]
+        mov [eax + Ball_x], ebx
+
+        mov ebx, [eax + Ball_radius]
+        sar ebx, 1
+        add ebx, [g_bat + Bat_height]
+        add ebx, [g_bat + Bat_bottom]
+        add ebx, 3
+        sub ebx, [g_height]
+        neg ebx
+        mov [eax + Ball_y], ebx
+
+        %pop
         popa
         leave
         ret

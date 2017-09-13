@@ -71,6 +71,7 @@
 %define Ball_speed              20      ; v2
 %define Ball__SIZE              28
 
+
 ; === Vector macros
 
 %macro NORMALIZE 1

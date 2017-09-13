@@ -5,6 +5,7 @@ extern g_state
 extern g_input
 
 extern g_ball_count
+extern g_ball_color
 extern g_current_level
 extern g_falling_buffs
 extern g_bullet_cooldown
