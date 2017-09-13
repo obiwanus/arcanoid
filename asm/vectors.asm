@@ -1,5 +1,6 @@
-%include "game.inc"
-%include "external.inc"
+%include 'base.inc'
+%include 'game.inc'
+%include 'external.inc'
 
 segment .text
 global v2_length

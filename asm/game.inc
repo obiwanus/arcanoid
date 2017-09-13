@@ -1,6 +1,9 @@
-%define TRUE    1
-%define FALSE   0
+%ifndef __GAME_INC__
+%define __GAME_INC__
 
+
+%define BG_COLOR                 0x00000000
+%define WALL_SIZE                5
 %define MAX_BALLS                10
 %define MAX_LEVELS               3
 %define MAX_BUFFS                10
@@ -9,9 +12,8 @@
 %xdefine BRICKS_PER_ROW           11
 %xdefine BRICKS_PER_COL           20
 %define BRICKS_TOTAL             (BRICKS_PER_ROW * BRICKS_PER_COL)
-%define WALL_SIZE                5
 %define DEFAULT_BAT_WIDTH        70
-%define BAT_MOVE_STEP            6.0
+%define BAT_MOVE_STEP            6
 %xdefine START_BALL_SPEED        4
 %xdefine MAX_BALL_SPEED          8
 %define BULLET_COOLDOWN          20
@@ -97,3 +99,5 @@
 %macro SCALE 2
         ; TODO
 %endmacro
+
+%endif  ; __GAME_INC__

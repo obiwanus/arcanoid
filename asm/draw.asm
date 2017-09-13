@@ -1,12 +1,10 @@
-; --------------------------------------------------------
-segment .data
-; --------------------------------------------------------
-segment .bss
-extern g_pixels, g_width, g_height
+%include 'base.inc'
+%include 'external.inc'
+%include 'game.inc'
 
 ; --------------------------------------------------------
 segment .text
-global  draw_rect, draw_pixel, draw_circle
+global  draw_rect, draw_pixel, draw_circle, draw_bat
 
 ; ========================================================
 ; draw_rect(Rect rect, u32 color)
@@ -109,7 +107,7 @@ draw_pixel:
 ; ========================================================
 ; draw_circle(float X, float Y, float radius, u32 color)
 draw_circle:
-        %push draw_circle_ctx
+        %push
         %stacksize flat
         %arg X:dword, Y:dword, radius:dword, color:dword
         %assign %$localsize 0
@@ -187,8 +185,35 @@ draw_circle:
         sahf
         jna .for_y
 
+        popa
+        leave
+        ret
         %pop
+
+
+; ========================================================
+; draw_bat(u32 color)
+draw_bat:
+        %push
+        %stacksize flat
+        %arg color:dword
+        push ebp
+        mov ebp, esp
+        pusha
+
+        mov eax, [color]
+        push dword [color]
+        push dword [g_bat + Bat_height]
+        push dword [g_bat + Bat_width]
+        mov eax, [g_height]
+        sub eax, [g_bat + Bat_bottom]
+        sub eax, [g_bat + Bat_height]
+        push eax
+        push dword [g_bat + Bat_left]
+        call draw_rect
+        add esp, 20
 
         popa
         leave
         ret
+        %pop

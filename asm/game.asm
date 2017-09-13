@@ -1,3 +1,4 @@
+%include 'base.inc'
 %include 'game.inc'
 %include 'vectors.inc'
 ; --------------------------------------------------------
@@ -36,7 +37,7 @@ g_bat                   resd    6
 ; --------------------------------------------------------
 segment .text
 global  update_and_render, attach_to_bat
-extern  draw_rect, draw_pixel, draw_circle
+extern  draw_rect, draw_pixel, draw_circle, draw_bat
 
 ; ========================================================
 ; update_and_render(
@@ -90,6 +91,9 @@ update_and_render:
         call draw_circle
         add esp, 16                     ; remove parameters
 
+        call update_bat
+
+
 ; END ----------------------------------------------------
 
 program_continue:
@@ -113,7 +117,7 @@ init_level:
         pusha
 
         ; Clear screen
-        push dword 0x00662211
+        push dword BG_COLOR
         push dword [g_height]
         push dword [g_width]
         push dword 0
@@ -156,6 +160,8 @@ init_level:
         call attach_to_bat
         add esp, 4
 
+        ; TODO: finish level init
+
         ; Mark as initialised
         mov dword [g_level_initialised], TRUE
 
@@ -170,8 +176,7 @@ attach_to_bat:
         %push
         %stacksize flat
         %arg ball:dword
-        ; %assign %$localsize 0
-        ; %local left:dword, right:dword, top:dword, bottom:dword, x:dword, y:dword
+
         push ebp
         mov ebp, esp
         pusha
@@ -194,3 +199,64 @@ attach_to_bat:
         popa
         leave
         ret
+
+
+; ========================================================
+; update_bat()
+update_bat:
+        %push
+        %stacksize flat
+        %assign %$localsize 0
+        %local max_left:dword, max_right:dword
+        push ebp
+        mov ebp, esp
+        pusha
+
+        ; Erase bat
+        push dword BG_COLOR
+        call draw_bat
+        add esp, 4
+
+        ; Get move boundaries
+        mov dword [max_left], WALL_SIZE
+        mov eax, [g_width]
+        sub eax, WALL_SIZE
+        sub eax, [g_bat + Bat_width]
+        mov [max_right], eax
+
+        ; Move bat
+        mov eax, [g_bat + Bat_left]
+
+        button_is_down IB_left
+        jne .left_skip
+        sub eax, BAT_MOVE_STEP
+.left_skip:
+        button_is_down IB_right
+        jne .right_skip
+        add eax, BAT_MOVE_STEP
+.right_skip:
+
+        ; Restrict movement
+        cmp eax, [max_left]
+        jge .left_ok
+        mov eax, [max_left]
+.left_ok:
+        cmp eax, [max_right]
+        jle .right_ok
+        mov eax, [max_right]
+.right_ok:
+
+        ; Apply new position
+        mov [g_bat + Bat_left], eax
+
+        ; Redraw bat
+        push dword [g_bat + Bat_color]
+        call draw_bat
+        add esp, 4
+
+        popa
+        leave
+        ret
+        %pop
+
+

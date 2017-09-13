@@ -1,3 +1,6 @@
+%ifndef __EXTERNAL_INC__
+%define __EXTERNAL_INC__
+
 extern g_pixels
 extern g_width
 extern g_height
@@ -17,3 +20,5 @@ extern g_bricks
 extern g_buffs
 extern g_bullets
 extern g_bat
+
+%endif  ; __EXTERNAL_INC__

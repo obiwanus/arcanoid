@@ -13,6 +13,13 @@ C:
 ========================================================================
 DONE:
 
+14 Sep 2017
+- Attach main ball to bat
+- Move bat
+
+13 Sep 2017
+- Some level init
+
 12 Sep 2017
 - Exit on escape
 - Draw circle
@@ -29,6 +36,10 @@ DONE:
 
 8 Sep 2017
 - Draw a pixel on the screen using asm
+
+==== ASM work above ^ ===
+
+==== C work below ===
 
 7 Sep 2017
 - Some refactoring
