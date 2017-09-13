@@ -62,7 +62,6 @@
 
 ; === Ball
 
-%define Ball_Struct_Size        28
 %define Ball_active             0
 %define Ball_attached           1
 %define Ball_attached_x         4
@@ -70,26 +69,30 @@
 %define Ball_x                  12
 %define Ball_y                  16
 %define Ball_speed              20      ; v2
+%define Ball__SIZE              28
 
 ; === Vector macros
 
 %macro NORMALIZE 1
         push eax
-        mov eax, %1
-        push eax
-        call length                     ; result in st0
+        lea eax, %1
+        push eax                        ; pointer to v2
+        call v2_length                  ; result in st0
         add esp, 4
 
-        ; USE CORRECT INSTRUCTIONS
+        fld dword [eax + v2_x]
+        fdiv st1
+        fstp dword [eax + v2_x]         ; vector->x /= len
 
-        fdiv dword [eax + v2_x], st0    ; vector->x /= len
-        fdiv dword [eax + v2_y], st0    ; vector->y /= len
+        fld dword [eax + v2_y]
+        fdiv st1
+        fstp dword [eax + v2_y]         ; vector->x /= len
 
-
+        ffree st0
         pop eax
 %endmacro
 
 
 %macro SCALE 2
-
+        ; TODO
 %endmacro

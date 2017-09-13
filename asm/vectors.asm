@@ -2,10 +2,11 @@
 %include "external.inc"
 
 segment .text
+global v2_length
 
 ; ========================================================
-; float length(v2 *vector)
-length:
+; float v2_length(v2 *vector)
+v2_length:
         push ebp
         mov ebp, esp
         pusha

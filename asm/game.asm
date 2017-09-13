@@ -1,4 +1,5 @@
 %include 'game.inc'
+%include 'vectors.inc'
 ; --------------------------------------------------------
 segment .data
 g_level_initialised     dd      0
@@ -25,7 +26,7 @@ g_bullet_cooldown       resd    1
 g_bullets_in_flight     resd    1
 g_active_buffs          resd    Buff_Type__COUNT
 g_levels                resd    MAX_LEVELS
-g_balls                 resb    MAX_BALLS * Ball_Struct_Size
+g_balls                 resb    MAX_BALLS * Ball__SIZE
 g_bricks                resd    BRICKS_TOTAL
 g_buffs                 resd    3 * MAX_BUFFS
 g_bullets               resd    2 * MAX_BULLETS
@@ -138,7 +139,7 @@ init_level:
         mov dword [edx + Ball_speed + v2_y], __float32__(-1.0)
         NORMALIZE [edx + Ball_speed]
         SCALE [edx + Ball_speed], START_BALL_SPEED
-        add edx, Ball_Struct_Size
+        add edx, Ball__SIZE
         loop .reset_balls
 
 
