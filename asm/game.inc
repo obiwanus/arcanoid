@@ -14,7 +14,7 @@
 %define BRICKS_TOTAL             (BRICKS_PER_ROW * BRICKS_PER_COL)
 %define DEFAULT_BAT_WIDTH        70
 %define BAT_MOVE_STEP            6
-%xdefine START_BALL_SPEED        4
+%xdefine START_BALL_SPEED        __float32__(4.0)
 %xdefine MAX_BALL_SPEED          8
 %define BULLET_COOLDOWN          20
 
@@ -96,8 +96,26 @@
 %endmacro
 
 
+; usage: SCALE [vector_ptr] factor:float32
 %macro SCALE 2
-        ; TODO
+        push eax
+
+        push dword %2
+        fld dword [esp]        ; load factor
+        add esp, 4
+
+        lea eax, %1
+
+        fld dword [eax + v2_x]
+        fmul st1
+        fstp dword [eax + v2_x]
+
+        fld dword [eax + v2_y]
+        fmul st1
+        fstp dword [eax + v2_y]
+
+        ffree st0
+        pop eax
 %endmacro
 
 %endif  ; __GAME_INC__
