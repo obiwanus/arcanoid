@@ -297,6 +297,13 @@ update_balls:
         call draw_ball
         add esp, 8
 
+        cmp byte [ebx + Ball_attached], TRUE
+        jne .not_attached
+        push ebx
+        call attach_to_bat
+        add esp, 4
+.not_attached:
+
         ; Redraw ball
         push dword [g_ball_color]
         push ebx
