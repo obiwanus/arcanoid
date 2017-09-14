@@ -1,10 +1,10 @@
 
 ASM:
 
-- Draw balls
-- Move balls
 - Draw level
+- Bounce balls
 
+- Range check for draw circle
 - Use SIMD to draw
 
 C:
@@ -12,6 +12,10 @@ C:
 
 ========================================================================
 DONE:
+
+15 Sep 2017
+- Move balls
+- Draw balls
 
 14 Sep 2017
 - Attach main ball to bat

@@ -278,13 +278,15 @@ update_bat:
 update_balls:
         %push
         %stacksize flat
-        ; %assign %$localsize 0
-        ; %local max_left:dword, max_right:dword
+        %assign %$localsize 0
+        %local bleft:dword, bright:dword, btop:dword, bbottom:dword
+        %local bradius:dword, bx:dword, by:dword
         push ebp
         mov ebp, esp
+        sub esp, 20
         pusha
 
-        mov ecx, MAX_BALLS
+        mov ecx, 0              ; ball index
         mov ebx, g_balls        ; ball ptr
 .for_each_ball:
         cmp byte [ebx + Ball_active], TRUE
@@ -321,6 +323,33 @@ update_balls:
         faddp st1
         fstp dword [ebx + Ball_y]
 
+        ; Get screen borders
+        fld dword [ebx + Ball_radius]
+        fistp dword [bradius]
+
+        mov eax, WALL_SIZE
+        add eax, [bradius]
+        mov [bleft], eax
+        mov [btop], eax
+
+        mov eax, [g_width]
+        sub eax, WALL_SIZE
+        sub eax, [bradius]
+        mov [bright], eax
+
+        mov eax, [g_height]
+        sub eax, WALL_SIZE
+        sub eax, [bradius]
+        mov [bbottom], eax
+
+        ; Collision with screen borders
+        mov eax, [bleft]
+        cmp [ebx + Ball_x], eax
+        jge .left_ok
+        mov [ebx + Ball_x], eax
+
+.left_ok
+
 .draw_and_next:
         ; Redraw ball
         push dword [g_ball_color]
@@ -330,7 +359,9 @@ update_balls:
 
 .next_ball:
         add ebx, Ball__SIZE
-        loop .for_each_ball
+        inc ecx
+        cmp ecx, MAX_BALLS
+        jl .for_each_ball
 
         popa
         leave
