@@ -92,7 +92,6 @@ update_and_render:
         add esp, 16                     ; remove parameters
 
         call update_bat
-
         call update_balls
 
 
@@ -291,6 +290,12 @@ update_balls:
         cmp byte [ebx + Ball_active], TRUE
         jne .next_ball   ; continue
 
+        ; Release
+        button_is_down IB_space
+        jne .skip_release
+        mov byte [ebx + Ball_attached], FALSE
+.skip_release:
+
         ; Erase ball
         push dword BG_COLOR
         push ebx
@@ -302,8 +307,21 @@ update_balls:
         push ebx
         call attach_to_bat
         add esp, 4
+        jmp .draw_and_next
 .not_attached:
 
+        ; Move
+        fld dword [ebx + Ball_x]
+        fld dword [ebx + Ball_speed + v2_x]
+        faddp st1
+        fstp dword [ebx + Ball_x]
+
+        fld dword [ebx + Ball_y]
+        fld dword [ebx + Ball_speed + v2_y]
+        faddp st1
+        fstp dword [ebx + Ball_y]
+
+.draw_and_next:
         ; Redraw ball
         push dword [g_ball_color]
         push ebx
