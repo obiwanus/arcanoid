@@ -4,7 +4,7 @@
 
 ; --------------------------------------------------------
 segment .text
-global  draw_rect, draw_pixel, draw_circle, draw_bat
+global  draw_rect, draw_pixel, draw_circle, draw_bat, draw_ball
 
 ; ========================================================
 ; draw_rect(Rect rect, u32 color)
@@ -201,7 +201,6 @@ draw_bat:
         mov ebp, esp
         pusha
 
-        mov eax, [color]
         push dword [color]
         push dword [g_bat + Bat_height]
         push dword [g_bat + Bat_width]
@@ -212,6 +211,30 @@ draw_bat:
         push dword [g_bat + Bat_left]
         call draw_rect
         add esp, 20
+
+        popa
+        leave
+        ret
+        %pop
+
+
+; ========================================================
+; draw_ball(Ball *ball, u32 color)
+draw_ball:
+        %push
+        %stacksize flat
+        %arg ball_ptr:dword, color:dword
+        push ebp
+        mov ebp, esp
+        pusha
+
+        mov ebx, [ball_ptr]     ; get the ptr
+        push dword [color]
+        push dword [ebx + Ball_radius]
+        push dword [ebx + Ball_y]
+        push dword [ebx + Ball_x]
+        call draw_circle
+        add esp, 16
 
         popa
         leave

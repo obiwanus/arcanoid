@@ -37,7 +37,7 @@ g_bat                   resd    6
 ; --------------------------------------------------------
 segment .text
 global  update_and_render, attach_to_bat
-extern  draw_rect, draw_pixel, draw_circle, draw_bat
+extern  draw_rect, draw_pixel, draw_circle, draw_bat, draw_ball
 
 ; ========================================================
 ; update_and_render(
@@ -152,8 +152,8 @@ init_level:
         ; Activate and attach main ball
         mov dword [g_ball_count], 1
         mov dword [g_ball_color], 0x00FFFFFF
-        mov dword [g_balls + Ball_active], TRUE
-        mov dword [g_balls + Ball_attached], TRUE
+        mov byte [g_balls + Ball_active], TRUE
+        mov byte [g_balls + Ball_attached], TRUE
         mov eax, [g_bat + Bat_width]
         sar eax, 1  ; divide by 2
         add eax, 5  ; attached_x = bat->width / 2 + 5
@@ -161,6 +161,10 @@ init_level:
         push dword g_balls      ; pointer to main ball
         call attach_to_bat
         add esp, 4
+
+        mov eax, [g_balls + Ball_x]
+        mov eax, [g_balls + Ball_y]
+        mov eax, [g_balls + Ball_radius]
 
         ; TODO: finish level init
 
@@ -186,16 +190,24 @@ attach_to_bat:
         mov eax, [ball]     ; took some time to figure out
         mov ebx, [g_bat + Bat_left]
         add ebx, [eax + Ball_attached_x]
-        mov [eax + Ball_x], ebx
+        mov dword [eax + Ball_x], ebx
+        fild dword [eax + Ball_x]
+        fstp dword [eax + Ball_x]       ; convert to float and store
 
+        fld dword [eax + Ball_radius]
+        fistp dword [eax + Ball_radius] ; tmp convert to int
         mov ebx, [eax + Ball_radius]
+        fild dword [eax + Ball_radius]
+        fstp dword [eax + Ball_radius]  ; convert back to float
         sar ebx, 1
         add ebx, [g_bat + Bat_height]
         add ebx, [g_bat + Bat_bottom]
-        add ebx, 3
+        add ebx, 5
         sub ebx, [g_height]
         neg ebx
         mov [eax + Ball_y], ebx
+        fild dword [eax + Ball_y]
+        fstp dword [eax + Ball_y]
 
         %pop
         popa
@@ -274,12 +286,25 @@ update_balls:
         pusha
 
         mov ecx, MAX_BALLS
+        mov ebx, g_balls        ; ball ptr
 .for_each_ball:
-        push ecx
+        cmp byte [ebx + Ball_active], TRUE
+        jne .next_ball   ; continue
 
-        ; TODO: translate from right
+        ; Erase ball
+        push dword BG_COLOR
+        push ebx
+        call draw_ball
+        add esp, 8
 
-        pop ecx
+        ; Redraw ball
+        push dword [g_ball_color]
+        push ebx
+        call draw_ball
+        add esp, 8
+
+.next_ball:
+        add ebx, Ball__SIZE
         loop .for_each_ball
 
         popa
