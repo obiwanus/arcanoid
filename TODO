@@ -2,7 +2,6 @@
 ASM:
 
 - Draw level
-- Bounce balls
 
 - Range check for draw circle
 - Use SIMD to draw
@@ -12,6 +11,9 @@ C:
 
 ========================================================================
 DONE:
+
+16 Sep 2017
+- Bounce balls (first use of xmm)
 
 15 Sep 2017
 - Move balls

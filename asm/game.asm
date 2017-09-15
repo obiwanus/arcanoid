@@ -4,6 +4,8 @@
 ; --------------------------------------------------------
 segment .data
 g_level_initialised     dd      0
+g_wall_size             dd      __float32__(5.0)
+g_xmm_sign32            dd      0x80000000, 0x80000000, 0x80000000, 0x80000000
 ; --------------------------------------------------------
 segment .bss
 
@@ -231,9 +233,10 @@ update_bat:
         add esp, 4
 
         ; Get move boundaries
-        mov dword [max_left], WALL_SIZE
+        ; TODO: wall size
+        mov dword [max_left], 5
         mov eax, [g_width]
-        sub eax, WALL_SIZE
+        sub eax, 5
         sub eax, [g_bat + Bat_width]
         mov [max_right], eax
 
@@ -312,43 +315,64 @@ update_balls:
         jmp .draw_and_next
 .not_attached:
 
-        ; Move
-        fld dword [ebx + Ball_x]
-        fld dword [ebx + Ball_speed + v2_x]
-        faddp st1
-        fstp dword [ebx + Ball_x]
+        ; Move ball
+        movss xmm0, [ebx + Ball_x]
+        addss xmm0, [ebx + Ball_speed + v2_x]
 
-        fld dword [ebx + Ball_y]
-        fld dword [ebx + Ball_speed + v2_y]
-        faddp st1
-        fstp dword [ebx + Ball_y]
+        movss xmm1, [ebx + Ball_y]
+        addss xmm1, [ebx + Ball_speed + v2_y]
+
 
         ; Get screen borders
-        fld dword [ebx + Ball_radius]
-        fistp dword [bradius]
 
-        mov eax, WALL_SIZE
-        add eax, [bradius]
-        mov [bleft], eax
-        mov [btop], eax
+        ; xmm3 - left, top
+        movss xmm3, [g_wall_size]
+        addss xmm3, [ebx + Ball_radius]
 
-        mov eax, [g_width]
-        sub eax, WALL_SIZE
-        sub eax, [bradius]
-        mov [bright], eax
+        ; xmm4 - right
+        cvtsi2ss xmm4, dword [g_width]
+        subss xmm4, [g_wall_size]
+        subss xmm4, [ebx + Ball_radius]
 
-        mov eax, [g_height]
-        sub eax, WALL_SIZE
-        sub eax, [bradius]
-        mov [bbottom], eax
+        ; xmm5 - bottom
+        cvtsi2ss xmm5, dword [g_height]
+        subss xmm5, [g_wall_size]
+        subss xmm5, [ebx + Ball_radius]
 
         ; Collision with screen borders
-        mov eax, [bleft]
-        cmp [ebx + Ball_x], eax
-        jge .left_ok
-        mov [ebx + Ball_x], eax
+        ; (xmm0 is ball->x, xmm1 is ball->y)
+        ucomiss xmm0, xmm3      ; ball->x < left ?
+        jnb .left_ok
+        movss xmm0, xmm3
+        movss xmm2, dword [ebx + Ball_speed + v2_x]
+        xorps xmm2, [g_xmm_sign32]
+        movss dword [ebx + Ball_speed + v2_x], xmm2     ; speed.x = -speed.x
+.left_ok:
+        ucomiss xmm0, xmm4      ; ball->x > right ?
+        jna .right_ok
+        movss xmm0, xmm4
+        movss xmm2, dword [ebx + Ball_speed + v2_x]
+        xorps xmm2, [g_xmm_sign32]
+        movss dword [ebx + Ball_speed + v2_x], xmm2     ; speed.x = -speed.x
+.right_ok:
+        ucomiss xmm1, xmm3      ; ball->y < top ?
+        jnb .top_ok
+        movss xmm1, xmm3
+        movss xmm2, dword [ebx + Ball_speed + v2_y]
+        xorps xmm2, [g_xmm_sign32]
+        movss dword [ebx + Ball_speed + v2_y], xmm2     ; speed.y = -speed.y
+.top_ok:
+        ucomiss xmm1, xmm5      ; ball->y < top ?
+        jna .bottom_ok
+        ; TODO: destroy ball, check buff
+        movss xmm1, xmm5
+        movss xmm2, dword [ebx + Ball_speed + v2_y]
+        xorps xmm2, [g_xmm_sign32]
+        movss dword [ebx + Ball_speed + v2_y], xmm2     ; speed.y = -speed.y
+.bottom_ok:
 
-.left_ok
+        movss [ebx + Ball_x], xmm0
+        movss [ebx + Ball_y], xmm1
 
 .draw_and_next:
         ; Redraw ball
