@@ -281,9 +281,6 @@ update_bat:
 update_balls:
         %push
         %stacksize flat
-        %assign %$localsize 0
-        %local bleft:dword, bright:dword, btop:dword, bbottom:dword
-        %local bradius:dword, bx:dword, by:dword
         push ebp
         mov ebp, esp
         sub esp, 20
@@ -322,19 +319,18 @@ update_balls:
         movss xmm1, [ebx + Ball_y]
         addss xmm1, [ebx + Ball_speed + v2_y]
 
-
         ; Get screen borders
-
         ; xmm3 - left, top
+        ; xmm4 - right
+        ; xmm5 - bottom
+
         movss xmm3, [g_wall_size]
         addss xmm3, [ebx + Ball_radius]
 
-        ; xmm4 - right
         cvtsi2ss xmm4, dword [g_width]
         subss xmm4, [g_wall_size]
         subss xmm4, [ebx + Ball_radius]
 
-        ; xmm5 - bottom
         cvtsi2ss xmm5, dword [g_height]
         subss xmm5, [g_wall_size]
         subss xmm5, [ebx + Ball_radius]
@@ -362,7 +358,7 @@ update_balls:
         xorps xmm2, [g_xmm_sign32]
         movss dword [ebx + Ball_speed + v2_y], xmm2     ; speed.y = -speed.y
 .top_ok:
-        ucomiss xmm1, xmm5      ; ball->y < top ?
+        ucomiss xmm1, xmm5      ; ball->y > bottom ?
         jna .bottom_ok
         ; TODO: destroy ball, check buff
         movss xmm1, xmm5
@@ -371,6 +367,14 @@ update_balls:
         movss dword [ebx + Ball_speed + v2_y], xmm2     ; speed.y = -speed.y
 .bottom_ok:
 
+        ; Collision with the bat
+
+        ; TODO: !!!!!!!!!!!!!!!!!!!
+        ; - try to translate the code on the right as is
+        ; - only THEN think about packing
+
+
+        ; Apply x and y
         movss [ebx + Ball_x], xmm0
         movss [ebx + Ball_y], xmm1
 

@@ -2,6 +2,7 @@
 ASM:
 
 - Draw level
+- Try to use nasm structs to avoid explicit state vars
 
 - Range check for draw circle
 - Use SIMD to draw
