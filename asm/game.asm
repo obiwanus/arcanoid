@@ -38,8 +38,9 @@ g_bat                   resd    6
 
 ; --------------------------------------------------------
 segment .text
-global  update_and_render, attach_to_bat
-extern  draw_rect, draw_pixel, draw_circle, draw_bat, draw_ball
+global update_and_render, attach_to_bat
+extern draw_rect, draw_pixel, draw_circle, draw_bat, draw_ball
+extern v2_length, v2_lerp
 
 ; ========================================================
 ; update_and_render(
@@ -279,15 +280,20 @@ update_bat:
 ; ========================================================
 ; update_balls()
 segment .data
-g_bat_margin            dd      __float32__(2.0)        ; must be 2.0
+const_bat_margin        dd      __float32__(2.0)        ; must be 2.0
+const_vector_up         dd      __float32__(0.0), __float32__(-1.0)
+const_vector_left       dd      __float32__(-0.832050), __float32__(-0.554700)
+const_vector_right      dd      __float32__( 0.832050), __float32__(-0.554700)
 
 segment .text
 update_balls:
         %push
         %stacksize flat
+        %assign %$localsize 0
+        %local new_direction:qword
         push ebp
         mov ebp, esp
-        sub esp, 20
+        sub esp, 8
         pusha
 
         mov ecx, 0              ; ball index
@@ -380,13 +386,13 @@ update_balls:
 
         cvtsi2ss xmm3, [g_bat + Bat_left]
         subss xmm3, [ebx + Ball_radius]
-        addss xmm3, [g_bat_margin]
+        addss xmm3, [const_bat_margin]
 
         cvtsi2ss xmm4, [g_bat + Bat_left]
         cvtsi2ss xmm2, [g_bat + Bat_width]
         addss xmm4, xmm2
         addss xmm4, [ebx + Ball_radius]
-        subss xmm4, [g_bat_margin]
+        subss xmm4, [const_bat_margin]
 
         cvtsi2ss xmm5, [g_height]
         cvtsi2ss xmm2, [g_bat + Bat_bottom]
@@ -399,7 +405,7 @@ update_balls:
 
         movss xmm7, xmm3
         addss xmm7, xmm4
-        divss xmm7, [g_bat_margin]      ; just so happens it's 2.0
+        divss xmm7, [const_bat_margin]      ; just so happens it's 2.0
 
         ucomiss xmm0, xmm3              ; ball->x < left ?
         jb .no_bat_collision
@@ -411,7 +417,31 @@ update_balls:
         ja .no_bat_collision
 
         ; Collision!
-        mov byte [ebx + Ball_attached], TRUE
+        movss xmm1, xmm6                ; ball->y = top
+        movss xmm2, dword [ebx + Ball_speed + v2_y]
+        xorps xmm2, [g_xmm_sign32]
+        movss dword [ebx + Ball_speed + v2_y], xmm2     ; speed.y = -speed.y
+
+        ; top and bottom no longer needed, so xmm5 and xmm6 are free
+
+        ; Get reflection angle (calculate new direction)
+        ; t = xmm2
+        ucomiss xmm0, xmm7              ; ball->x < middle ?
+        ja .right_half
+.left_half:
+        movss xmm2, xmm7
+        subss xmm2, xmm0                ; xmm2 = middle - ball->x
+        movss xmm5, xmm7
+        subss xmm5, xmm3                ; xmm5 = middle - left
+        divss xmm2, xmm5                ; t = (middle-ball->x) / (middle-left)
+
+
+        call v2_lerp
+        jmp .new_speed
+.right_half:
+
+.new_speed:
+
 
 .no_bat_collision:
 
