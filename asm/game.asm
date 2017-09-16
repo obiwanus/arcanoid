@@ -279,7 +279,7 @@ update_bat:
 ; ========================================================
 ; update_balls()
 segment .data
-g_bat_margin            dd      __float32__(2.0)        ; DO NOT CHANGE
+g_bat_margin            dd      __float32__(2.0)        ; must be 2.0
 
 segment .text
 update_balls:
@@ -383,27 +383,37 @@ update_balls:
         addss xmm3, [g_bat_margin]
 
         cvtsi2ss xmm4, [g_bat + Bat_left]
-        addss xmm4, [g_bat + Bat_width]
+        cvtsi2ss xmm2, [g_bat + Bat_width]
+        addss xmm4, xmm2
         addss xmm4, [ebx + Ball_radius]
         subss xmm4, [g_bat_margin]
 
-        movss xmm5, [g_height]
-        cvtsi2ss xmm6, [g_bat + Bat_bottom]
-        subss xmm5, xmm6
+        cvtsi2ss xmm5, [g_height]
+        cvtsi2ss xmm2, [g_bat + Bat_bottom]
+        subss xmm5, xmm2
 
         movss xmm6, xmm5
-        cvtsi2ss xmm7, [g_bat + Bat_height]
-        subss xmm6, xmm7
+        cvtsi2ss xmm2, [g_bat + Bat_height]
+        subss xmm6, xmm2
         subss xmm6, [ebx + Ball_radius]
 
         movss xmm7, xmm3
         addss xmm7, xmm4
         divss xmm7, [g_bat_margin]      ; just so happens it's 2.0
 
-        ; TODO: !!!!!!!!!!!!!!!!!!!
-        ; - try to translate the code on the right as is
-        ; - only THEN think about packing
+        ucomiss xmm0, xmm3              ; ball->x < left ?
+        jb .no_bat_collision
+        ucomiss xmm0, xmm4              ; ball->x > right ?
+        ja .no_bat_collision
+        ucomiss xmm1, xmm6              ; ball->y < top ?
+        jb .no_bat_collision
+        ucomiss xmm1, xmm5              ; ball->y > bottom ?
+        ja .no_bat_collision
 
+        ; Collision!
+        mov byte [ebx + Ball_attached], TRUE
+
+.no_bat_collision:
 
         ; Apply x and y
         movss [ebx + Ball_x], xmm0
