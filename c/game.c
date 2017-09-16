@@ -292,7 +292,7 @@ void MoveBalls(Pixel_Buffer *screen, Program_State *state) {
     {
       Bat *bat = &state->bat;
       const float kBMargin = 2.0f,  // to shrink the collision rect
-          kBLeft = bat->left - ball->radius + kBMargin,
+                  kBLeft = bat->left - ball->radius + kBMargin,
                   kBRight = bat->left + bat->width + ball->radius - kBMargin,
                   kBBottom = screen->height - bat->bottom,
                   kBTop = kBBottom - bat->height - ball->radius,

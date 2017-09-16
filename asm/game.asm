@@ -278,6 +278,10 @@ update_bat:
 
 ; ========================================================
 ; update_balls()
+segment .data
+g_bat_margin            dd      __float32__(2.0)        ; DO NOT CHANGE
+
+segment .text
 update_balls:
         %push
         %stacksize flat
@@ -368,6 +372,33 @@ update_balls:
 .bottom_ok:
 
         ; Collision with the bat
+        ; xmm3 - left
+        ; xmm4 - right
+        ; xmm5 - bottom
+        ; xmm6 - top
+        ; xmm7 - middle
+
+        cvtsi2ss xmm3, [g_bat + Bat_left]
+        subss xmm3, [ebx + Ball_radius]
+        addss xmm3, [g_bat_margin]
+
+        cvtsi2ss xmm4, [g_bat + Bat_left]
+        addss xmm4, [g_bat + Bat_width]
+        addss xmm4, [ebx + Ball_radius]
+        subss xmm4, [g_bat_margin]
+
+        movss xmm5, [g_height]
+        cvtsi2ss xmm6, [g_bat + Bat_bottom]
+        subss xmm5, xmm6
+
+        movss xmm6, xmm5
+        cvtsi2ss xmm7, [g_bat + Bat_height]
+        subss xmm6, xmm7
+        subss xmm6, [ebx + Ball_radius]
+
+        movss xmm7, xmm3
+        addss xmm7, xmm4
+        divss xmm7, [g_bat_margin]      ; just so happens it's 2.0
 
         ; TODO: !!!!!!!!!!!!!!!!!!!
         ; - try to translate the code on the right as is
