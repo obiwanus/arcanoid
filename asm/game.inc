@@ -14,7 +14,7 @@
 %define BRICKS_TOTAL             (BRICKS_PER_ROW * BRICKS_PER_COL)
 %define DEFAULT_BAT_WIDTH        70
 %define BAT_MOVE_STEP            6
-%xdefine START_BALL_SPEED        __float32__(4.0)
+%xdefine START_BALL_SPEED        __float32__(8.0)
 %xdefine MAX_BALL_SPEED          8
 %define BULLET_COOLDOWN          20
 

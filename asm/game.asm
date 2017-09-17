@@ -437,7 +437,7 @@ update_balls:
 
         sub esp, 8
         lea eax, [new_direction]
-        mov dword [esp + 4], eax                ; &new_direction - result
+        mov dword [esp + 4], eax                ; &new_direction
         movss dword [esp], xmm2                 ; t
         push dword const_vector_left
         push dword const_vector_up
@@ -445,6 +445,20 @@ update_balls:
         add esp, 16
         jmp .new_speed
 .right_half:
+        movss xmm2, xmm0
+        subss xmm2, xmm7                ; xmm2 = ball->x - middle
+        movss xmm5, xmm4
+        subss xmm5, xmm7                ; xmm5 = right - middle
+        divss xmm2, xmm5                ; t = (ball->x - middle) / (right - middle)
+
+        sub esp, 8
+        lea eax, [new_direction]
+        mov dword [esp + 4], eax                ; &new_direction
+        movss dword [esp], xmm2                 ; t
+        push dword const_vector_right
+        push dword const_vector_up
+        call v2_lerp
+        add esp, 16
 
 .new_speed:
         NORMALIZE [new_direction]
