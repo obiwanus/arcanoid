@@ -76,6 +76,15 @@
 
 ; === Vector macros
 
+%macro LENGTH 1
+        push eax
+        lea eax, %1
+        push eax                        ; pointer to v2
+        call v2_length                  ; result in st0
+        add esp, 4
+        pop eax
+%endmacro
+
 %macro NORMALIZE 1
         push eax
         lea eax, %1
@@ -94,7 +103,6 @@
         ffree st0
         pop eax
 %endmacro
-
 
 ; usage: SCALE [vector_ptr] factor:float32
 %macro SCALE 2

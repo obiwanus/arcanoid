@@ -435,13 +435,31 @@ update_balls:
         subss xmm5, xmm3                ; xmm5 = middle - left
         divss xmm2, xmm5                ; t = (middle-ball->x) / (middle-left)
 
-
+        sub esp, 8
+        lea eax, [new_direction]
+        mov dword [esp + 4], eax                ; &new_direction - result
+        movss dword [esp], xmm2                 ; t
+        push dword const_vector_left
+        push dword const_vector_up
         call v2_lerp
+        add esp, 16
         jmp .new_speed
 .right_half:
 
 .new_speed:
+        NORMALIZE [new_direction]
+        LENGTH [ebx + Ball_speed]       ; result in ST0
+        sub esp, 4
+        fstp dword [esp]
+        mov eax, [esp]
+        add esp, 4
+        SCALE [new_direction], eax
 
+        ; Set new speed
+        mov eax, [new_direction + v2_x]
+        mov [ebx + Ball_speed + v2_x], eax
+        mov eax, [new_direction + v2_y]
+        mov [ebx + Ball_speed + v2_y], eax
 
 .no_bat_collision:
 
