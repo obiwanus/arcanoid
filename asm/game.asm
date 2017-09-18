@@ -2,16 +2,17 @@
 %include 'game.inc'
 %include 'vectors.inc'
 ; --------------------------------------------------------
-segment .data
+segment .data align=16
+g_xmm_sign32            dd      0x80000000, 0x80000000, 0x80000000, 0x80000000  ; must be aligned
 g_level_initialised     dd      0
+g_current_level         dd      0
 g_wall_size             dd      __float32__(5.0)
-g_xmm_sign32            dd      0x80000000, 0x80000000, 0x80000000, 0x80000000
 ; --------------------------------------------------------
 segment .bss
 
 ; Export
 global g_pixels, g_width, g_height, g_state, g_input
-global g_ball_count, g_ball_color, g_current_level, g_falling_buffs
+global g_ball_count, g_ball_color, g_falling_buffs
 global g_bullet_cooldown, g_bullets_in_flight
 global g_active_buffs, g_levels, g_balls, g_bricks
 global g_buffs, g_bullets, g_bat
@@ -24,12 +25,11 @@ g_input         resd    1
 
 g_ball_count            resd    1
 g_ball_color            resd    1
-g_current_level         resd    1
 g_falling_buffs         resd    1
 g_bullet_cooldown       resd    1
 g_bullets_in_flight     resd    1
 g_active_buffs          resd    Buff_Type__COUNT
-g_levels                resd    MAX_LEVELS
+g_levels                resd    1
 g_balls                 resb    MAX_BALLS * Ball__SIZE
 g_bricks                resd    BRICKS_TOTAL
 g_buffs                 resd    3 * MAX_BUFFS
@@ -45,8 +45,8 @@ extern v2_length, v2_lerp
 ; ========================================================
 ; update_and_render(
 ;       Pixel_Buffer *screen,
-;       Program_State *state,
-;       User_Input *input)
+;       User_Input *input,
+;       Level *levels)
 update_and_render:
         enter   0, 0                    ; setup routine
         pusha
@@ -63,6 +63,8 @@ update_and_render:
         mov [g_height], ebx
         mov eax, [ebp + 12]
         mov [g_input], eax
+        mov eax, [ebp + 16]
+        mov [g_levels], eax
 
         ; Check exit condition
         button_is_down IB_escape
@@ -78,21 +80,6 @@ update_and_render:
         jz .level_is_ok
         call init_level
 .level_is_ok:
-
-        push dword 0x0066AACC           ; color
-        push dword 100                  ; height
-        push dword 150                  ; width
-        push dword 100                  ; top
-        push dword 100                  ; left
-        call draw_rect
-        add esp, 20                     ; remove parameters
-
-        push dword 0x00AA66CC           ; color
-        push dword __float32__(20.0)    ; radius
-        push dword __float32__(300.0)   ; Y
-        push dword __float32__(100.0)   ; X
-        call draw_circle
-        add esp, 16                     ; remove parameters
 
         call update_bat
         call update_balls

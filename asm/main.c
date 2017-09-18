@@ -146,7 +146,10 @@ int main(int argc, char *argv[]) {
   User_Input *new_input = &inputs[1];
   *new_input = (const User_Input){};
 
+  // Init state
   srand((unsigned)LinuxGetWallClock());
+  Level levels[MAX_LEVELS];
+  CreateLevels(levels);
 
   // Main loop
   g_running = true;

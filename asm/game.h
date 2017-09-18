@@ -61,7 +61,9 @@ typedef struct Ball {
   float speed_y;
 } Ball;
 
-typedef struct Level { char *layout; } Level;
+typedef struct Level {
+  char *layout;
+} Level;
 
 typedef struct Rect {
   int left;
