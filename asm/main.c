@@ -242,7 +242,7 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    bool result = update_and_render(&pixel_buffer, new_input);
+    bool result = update_and_render(&pixel_buffer, new_input, levels);
     if (!result) {
       g_running = false;
     }

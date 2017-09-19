@@ -31,7 +31,7 @@ g_bullets_in_flight     resd    1
 g_active_buffs          resd    Buff_Type__COUNT
 g_levels                resd    1
 g_balls                 resb    MAX_BALLS * Ball__SIZE
-g_bricks                resd    BRICKS_TOTAL
+g_bricks                resb    BRICKS_TOTAL
 g_buffs                 resd    3 * MAX_BUFFS
 g_bullets               resd    2 * MAX_BULLETS
 g_bat                   resd    6
@@ -83,6 +83,7 @@ update_and_render:
 
         call update_bat
         call update_balls
+        call draw_bricks
 
 
 ; END ----------------------------------------------------
@@ -155,7 +156,71 @@ init_level:
         mov eax, [g_balls + Ball_y]
         mov eax, [g_balls + Ball_radius]
 
+        ; Clean up all bricks
+        mov ecx, BRICKS_TOTAL
+.clean_up_brick:
+        mov byte [g_bricks + ecx - 1], Brick_Empty
+        loop .clean_up_brick
+
+        ; Init new bricks
+        mov edx, [g_levels]             ; pointer to levels
+        mov eax, [g_current_level]      ; current level number
+        mov edx, [edx + eax * 4]        ; pointer to level string
+        mov ebx, 0                      ; brick_x
+        mov ecx, 0                      ; brick_y
+
+.init_brick:
+        cmp byte [edx], 0
+        je .init_brick_end              ; while (*b != '\0')
+
+        cmp byte [edx], 0x0A            ; \n
+        je .init_brick_newline
+        mov eax, ecx
+        imul eax, BRICKS_PER_ROW
+        add eax, ebx                    ; eax = brick_y * BRICKS_PER_ROW + brick_x
+        inc ebx                         ; brick_x++
+        cmp byte [edx], 'x'
+        jne .not_x
+        mov byte [g_bricks + eax], Brick_Normal
+        jmp .init_brick_next
+.not_x:
+        cmp byte [edx], 'u'
+        jne .not_u
+        mov byte [g_bricks + eax], Brick_Unbreakable
+        jmp .init_brick_next
+.not_u:
+        cmp byte [edx], 's'
+        jne .not_s
+        mov byte [g_bricks + eax], Brick_Strong
+        jmp .init_brick_next
+.not_s:
+        ; nothing
+        mov byte [g_bricks + eax], Brick_Empty
+        jmp .init_brick_next
+.init_brick_newline:
+        mov ebx, 0                      ; brick_x = 0
+        inc ecx                         ; brick_y++
+.init_brick_next:
+        inc edx
+        jmp .init_brick
+.init_brick_end:
+
         ; TODO: finish level init
+        ; // Remove all bullets
+        ; state->bullet_cooldown = 0;
+        ; state->bullets_in_flight = 0;
+        ; for (int i = 0; i < MAX_BULLETS; ++i) {
+        ;   state->bullets[i] = V2(-1, -1);  // negative means inactive
+        ; }
+
+        ; // Clean up all buffs
+        ; state->falling_buffs = 0;
+        ; for (int i = 0; i < MAX_BUFFS; ++i) {
+        ;   state->buffs[i].type = Buff_Inactive;
+        ; }
+        ; for (int i = 0; i < Buff_Type__COUNT; ++i) {
+        ;   state->active_buffs[i] = 0;
+        ; }
 
         ; Mark as initialised
         mov dword [g_level_initialised], TRUE
@@ -480,6 +545,81 @@ update_balls:
         inc ecx
         cmp ecx, MAX_BALLS
         jl .for_each_ball
+
+        popa
+        leave
+        ret
+        %pop
+
+
+; ========================================================
+; draw_bricks()
+segment .data
+const_bricks_per_row            dd      BRICKS_PER_ROW
+const_brick_height              dd      20
+segment .text
+draw_bricks:
+        %push
+        %stacksize flat
+        %assign %$localsize 0
+        %local brick_width:dword, brick_x:dword, brick_y:dword
+        push ebp
+        mov ebp, esp
+        sub esp, 12
+        pusha
+
+        ; Get brick width
+        mov eax, [g_width]
+        sub eax, WALL_SIZE
+        sub eax, WALL_SIZE
+        mov edx, 0
+        idiv dword [const_bricks_per_row]
+        mov [brick_width], eax
+
+        mov ecx, 0
+.draw_brick:
+        cmp byte [g_bricks + ecx], Brick_Empty
+        je .next_brick
+
+        ; Get brick x,y
+        mov edx, 0
+        mov eax, ecx
+        idiv dword [const_bricks_per_row]
+        mov dword [brick_x], edx
+        mov dword [brick_y], eax
+        mov eax, [brick_width]
+        imul eax, [brick_x]
+        add eax, WALL_SIZE
+        mov [brick_x], eax      ; store final brick_x
+        mov eax, [const_brick_height]
+        imul eax, [brick_y]
+        add eax, WALL_SIZE
+        mov [brick_y], eax      ; store final brick_y
+
+        ; Get color
+        mov eax, 0x00BBBBBB
+        cmp byte [g_bricks + ecx], Brick_Strong
+        jne .not_strong
+        mov eax, 0x00999999
+.not_strong:
+        cmp byte [g_bricks + ecx], Brick_Unbreakable
+        jne .not_unbreakable
+        mov eax, 0x00AA8888
+.not_unbreakable:
+
+        ; Draw
+        push eax
+        push dword [const_brick_height]
+        push dword [brick_width]
+        push dword [brick_y]
+        push dword [brick_x]
+        call draw_rect
+        add esp, 20
+
+.next_brick:
+        inc ecx
+        cmp ecx, BRICKS_TOTAL
+        jl .draw_brick
 
         popa
         leave

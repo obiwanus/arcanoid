@@ -73,6 +73,14 @@
 %define Ball_speed              20      ; v2
 %define Ball__SIZE              28
 
+; === Bricks
+
+%define Brick_Empty             0
+%define Brick_Normal            1
+%define Brick_Strong            2
+%define Brick_Unbreakable       3
+%define Brick__COUNT            4
+
 
 ; === Vector macros
 
