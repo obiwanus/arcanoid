@@ -533,6 +533,9 @@ update_balls:
         movss [ebx + Ball_x], xmm0
         movss [ebx + Ball_y], xmm1
 
+        ; Collision with the bricks
+
+
 .draw_and_next:
         ; Redraw ball
         push dword [g_ball_color]
@@ -545,6 +548,26 @@ update_balls:
         inc ecx
         cmp ecx, MAX_BALLS
         jl .for_each_ball
+
+        popa
+        leave
+        ret
+        %pop
+
+
+; ========================================================
+; collide_with_bricks(Ball *ball)
+collide_with_bricks:
+        %push
+        %stacksize flat
+        %assign %$localsize 0
+        %local brick_width:dword, brick_x:dword, brick_y:dword
+        push ebp
+        mov ebp, esp
+        sub esp, 12
+        pusha
+
+
 
         popa
         leave
