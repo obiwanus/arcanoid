@@ -26,6 +26,14 @@ u64 LinuxGetWallClock() {
 
 void CreateLevels(Level *levels) {
   int level = 0;
+  // levels[level++].layout =
+  //     "           \n"
+  //     "           \n"
+  //     "           \n"
+  //     "           \n"
+  //     "           \n"
+  //     "           \n"
+  //     "        xx ";
   levels[level++].layout =
       "           \n"
       " sx xxx xs \n"

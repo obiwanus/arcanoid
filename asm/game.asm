@@ -87,6 +87,15 @@ update_and_render:
         call update_balls
         call draw_bricks
 
+        call check_level_complete
+        cmp eax, TRUE
+        jne .level_not_complete
+        ; Next level
+        inc dword [g_current_level]
+        mov dword [g_level_initialised], FALSE
+        cmp dword [g_current_level], MAX_LEVELS
+        jnb program_end
+.level_not_complete:
 
 ; END ----------------------------------------------------
 
@@ -626,6 +635,8 @@ collide_with_bricks:
         add esp, 20
 .end_hit_brick:
 
+        jmp .break
+
         ; Bounce (TODO: powerball)
         subss xmm0, [edx + Ball.x]      ; ldist
         andps xmm0, [g_xmm_abs32]
@@ -800,6 +811,35 @@ draw_bricks:
         jl .draw_brick
 
         popa
+        leave
+        ret
+        %pop
+
+
+; ========================================================
+; check_level_complete() -> bool
+check_level_complete:
+        %push
+        %stacksize flat
+        %assign %$localsize 0
+        %local complete:dword
+        push ebp
+        mov ebp, esp
+        sub esp, 4
+        pusha
+
+        mov dword [complete], FALSE
+
+        mov ecx, BRICKS_TOTAL
+.for_bricks:
+        cmp byte [g_bricks + ecx], Brick_Empty
+        jne .return     ; return FALSE
+        loop .for_bricks
+
+        mov dword [complete], TRUE
+.return:
+        popa
+        mov eax, [complete]
         leave
         ret
         %pop
