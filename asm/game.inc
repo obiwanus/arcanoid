@@ -18,6 +18,15 @@
 %xdefine MAX_BALL_SPEED          8
 %define BULLET_COOLDOWN          20
 
+; === Rect
+
+struc Rect
+        .left           resd    1
+        .top            resd    1
+        .width          resd    1
+        .height         resd    1
+endstruc
+
 ; === Input
 
 %define IB_up           0
@@ -55,23 +64,36 @@
 
 ; === Bat
 
-%define Bat_left        0
-%define Bat_bottom      4
-%define Bat_width       8
-%define Bat_height      12
-%define Bat_color       16
-%define Bat_can_shoot   20
+struc Bat
+        .left           resd    1
+        .bottom         resd    1
+        .width          resd    1
+        .height         resd    1
+        .color          resd    1
+        .can_shoot      resd    1
+endstruc
 
 ; === Ball
 
-%define Ball_active             0
-%define Ball_attached           1
-%define Ball_attached_x         4
-%define Ball_radius             8
-%define Ball_x                  12
-%define Ball_y                  16
-%define Ball_speed              20      ; v2
-%define Ball__SIZE              28
+struc Ball
+        .active         resb    1
+        .attached       resb    1
+        alignb 4
+        .attached_x     resd    1
+        .radius         resd    1
+        .x              resd    1
+        .y              resd    1
+        .speed          resd    2
+endstruc
+
+; %define Ball_active             0
+; %define Ball_attached           1
+; %define Ball_attached_x         4
+; %define Ball_radius             8
+; %define Ball_x                  12
+; %define Ball_y                  16
+; %define Ball_speed              20      ; v2
+; %define Ball__SIZE              28
 
 ; === Bricks
 

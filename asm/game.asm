@@ -7,6 +7,8 @@ g_xmm_sign32            dd      0x80000000, 0x80000000, 0x80000000, 0x80000000  
 g_level_initialised     dd      0
 g_current_level         dd      0
 g_wall_size             dd      __float32__(5.0)
+const_bricks_per_row    dd      BRICKS_PER_ROW
+const_brick_height      dd      20
 ; --------------------------------------------------------
 segment .bss
 
@@ -30,7 +32,7 @@ g_bullet_cooldown       resd    1
 g_bullets_in_flight     resd    1
 g_active_buffs          resd    Buff_Type__COUNT
 g_levels                resd    1
-g_balls                 resb    MAX_BALLS * Ball__SIZE
+g_balls                 resb    MAX_BALLS * Ball_size
 g_bricks                resb    BRICKS_TOTAL
 g_buffs                 resd    3 * MAX_BUFFS
 g_bullets               resd    2 * MAX_BULLETS
@@ -118,43 +120,43 @@ init_level:
         add esp, 20
 
         ; Init bat
-        mov dword [g_bat + Bat_left],   100
-        mov dword [g_bat + Bat_bottom], 20
-        mov dword [g_bat + Bat_width],  DEFAULT_BAT_WIDTH
-        mov dword [g_bat + Bat_height], 13
-        mov dword [g_bat + Bat_color],  0x00FFFFFF
-        mov dword [g_bat + Bat_can_shoot], FALSE
+        mov dword [g_bat + Bat.left],   100
+        mov dword [g_bat + Bat.bottom], 20
+        mov dword [g_bat + Bat.width],  DEFAULT_BAT_WIDTH
+        mov dword [g_bat + Bat.height], 13
+        mov dword [g_bat + Bat.color],  0x00FFFFFF
+        mov dword [g_bat + Bat.can_shoot], FALSE
 
         ; Reset all balls
         mov ecx, MAX_BALLS
         mov edx, g_balls
 .reset_balls:
-        mov byte  [edx + Ball_active], FALSE
-        mov byte  [edx + Ball_attached], FALSE
-        mov dword [edx + Ball_radius], __float32__(8.0)
-        mov dword [edx + Ball_speed + v2_x], __float32__(1.0)
-        mov dword [edx + Ball_speed + v2_y], __float32__(-1.0)
-        NORMALIZE [edx + Ball_speed]
-        SCALE [edx + Ball_speed], START_BALL_SPEED
-        add edx, Ball__SIZE
+        mov byte  [edx + Ball.active], FALSE
+        mov byte  [edx + Ball.attached], FALSE
+        mov dword [edx + Ball.radius], __float32__(8.0)
+        mov dword [edx + Ball.speed + v2_x], __float32__(1.0)
+        mov dword [edx + Ball.speed + v2_y], __float32__(-1.0)
+        NORMALIZE [edx + Ball.speed]
+        SCALE [edx + Ball.speed], START_BALL_SPEED
+        add edx, Ball_size
         loop .reset_balls
 
         ; Activate and attach main ball
         mov dword [g_ball_count], 1
         mov dword [g_ball_color], 0x00FFFFFF
-        mov byte [g_balls + Ball_active], TRUE
-        mov byte [g_balls + Ball_attached], TRUE
-        mov eax, [g_bat + Bat_width]
+        mov byte [g_balls + Ball.active], TRUE
+        mov byte [g_balls + Ball.attached], TRUE
+        mov eax, [g_bat + Bat.width]
         sar eax, 1  ; divide by 2
         add eax, 5  ; attached_x = bat->width / 2 + 5
-        mov dword [g_balls + Ball_attached_x], eax
+        mov dword [g_balls + Ball.attached_x], eax
         push dword g_balls      ; pointer to main ball
         call attach_to_bat
         add esp, 4
 
-        mov eax, [g_balls + Ball_x]
-        mov eax, [g_balls + Ball_y]
-        mov eax, [g_balls + Ball_radius]
+        mov eax, [g_balls + Ball.x]
+        mov eax, [g_balls + Ball.y]
+        mov eax, [g_balls + Ball.radius]
 
         ; Clean up all bricks
         mov ecx, BRICKS_TOTAL
@@ -231,7 +233,7 @@ init_level:
 
 
 ; ========================================================
-; attach_to_bat(Ball *ball)
+; attach_to_g_bat + Bat.Ball*ball)
 attach_to_bat:
         %push
         %stacksize flat
@@ -242,26 +244,26 @@ attach_to_bat:
         pusha
 
         mov eax, [ball]     ; took some time to figure out
-        mov ebx, [g_bat + Bat_left]
-        add ebx, [eax + Ball_attached_x]
-        mov dword [eax + Ball_x], ebx
-        fild dword [eax + Ball_x]
-        fstp dword [eax + Ball_x]       ; convert to float and store
+        mov ebx, [g_bat + Bat.left]
+        add ebx, [eax + Ball.attached_x]
+        mov dword [eax + Ball.x], ebx
+        fild dword [eax + Ball.x]
+        fstp dword [eax + Ball.x]       ; convert to float and store
 
-        fld dword [eax + Ball_radius]
-        fistp dword [eax + Ball_radius] ; tmp convert to int
-        mov ebx, [eax + Ball_radius]
-        fild dword [eax + Ball_radius]
-        fstp dword [eax + Ball_radius]  ; convert back to float
+        fld dword [eax + Ball.radius]
+        fistp dword [eax + Ball.radius] ; tmp convert to int
+        mov ebx, [eax + Ball.radius]
+        fild dword [eax + Ball.radius]
+        fstp dword [eax + Ball.radius]  ; convert back to float
         sar ebx, 1
-        add ebx, [g_bat + Bat_height]
-        add ebx, [g_bat + Bat_bottom]
+        add ebx, [g_bat + Bat.height]
+        add ebx, [g_bat + Bat.bottom]
         add ebx, 5
         sub ebx, [g_height]
         neg ebx
-        mov [eax + Ball_y], ebx
-        fild dword [eax + Ball_y]
-        fstp dword [eax + Ball_y]
+        mov [eax + Ball.y], ebx
+        fild dword [eax + Ball.y]
+        fstp dword [eax + Ball.y]
 
         %pop
         popa
@@ -290,11 +292,11 @@ update_bat:
         mov dword [max_left], 5
         mov eax, [g_width]
         sub eax, 5
-        sub eax, [g_bat + Bat_width]
+        sub eax, [g_bat + Bat.width]
         mov [max_right], eax
 
         ; Move bat
-        mov eax, [g_bat + Bat_left]
+        mov eax, [g_bat + Bat.left]
 
         button_is_down IB_left
         jne .left_skip
@@ -316,10 +318,10 @@ update_bat:
 .right_ok:
 
         ; Apply new position
-        mov [g_bat + Bat_left], eax
+        mov [g_bat + Bat.left], eax
 
         ; Redraw bat
-        push dword [g_bat + Bat_color]
+        push dword [g_bat + Bat.color]
         call draw_bat
         add esp, 4
 
@@ -351,13 +353,13 @@ update_balls:
         mov ecx, 0              ; ball index
         mov ebx, g_balls        ; ball ptr
 .for_each_ball:
-        cmp byte [ebx + Ball_active], TRUE
+        cmp byte [ebx + Ball.active], TRUE
         jne .next_ball   ; continue
 
         ; Release
         button_is_down IB_space
         jne .skip_release
-        mov byte [ebx + Ball_attached], FALSE
+        mov byte [ebx + Ball.attached], FALSE
 .skip_release:
 
         ; Erase ball
@@ -366,7 +368,7 @@ update_balls:
         call draw_ball
         add esp, 8
 
-        cmp byte [ebx + Ball_attached], TRUE
+        cmp byte [ebx + Ball.attached], TRUE
         jne .not_attached
         push ebx
         call attach_to_bat
@@ -375,11 +377,11 @@ update_balls:
 .not_attached:
 
         ; Move ball
-        movss xmm0, [ebx + Ball_x]
-        addss xmm0, [ebx + Ball_speed + v2_x]
+        movss xmm0, [ebx + Ball.x]
+        addss xmm0, [ebx + Ball.speed + v2_x]
 
-        movss xmm1, [ebx + Ball_y]
-        addss xmm1, [ebx + Ball_speed + v2_y]
+        movss xmm1, [ebx + Ball.y]
+        addss xmm1, [ebx + Ball.speed + v2_y]
 
         ; Get screen borders
         ; xmm3 - left, top
@@ -387,46 +389,46 @@ update_balls:
         ; xmm5 - bottom
 
         movss xmm3, [g_wall_size]
-        addss xmm3, [ebx + Ball_radius]
+        addss xmm3, [ebx + Ball.radius]
 
         cvtsi2ss xmm4, dword [g_width]
         subss xmm4, [g_wall_size]
-        subss xmm4, [ebx + Ball_radius]
+        subss xmm4, [ebx + Ball.radius]
 
         cvtsi2ss xmm5, dword [g_height]
         subss xmm5, [g_wall_size]
-        subss xmm5, [ebx + Ball_radius]
+        subss xmm5, [ebx + Ball.radius]
 
         ; Collision with screen borders
         ; (xmm0 is ball->x, xmm1 is ball->y)
         ucomiss xmm0, xmm3      ; ball->x < left ?
         jnb .left_ok
         movss xmm0, xmm3
-        movss xmm2, dword [ebx + Ball_speed + v2_x]
+        movss xmm2, dword [ebx + Ball.speed + v2_x]
         xorps xmm2, [g_xmm_sign32]
-        movss dword [ebx + Ball_speed + v2_x], xmm2     ; speed.x = -speed.x
+        movss dword [ebx + Ball.speed + v2_x], xmm2     ; speed.x = -speed.x
 .left_ok:
         ucomiss xmm0, xmm4      ; ball->x > right ?
         jna .right_ok
         movss xmm0, xmm4
-        movss xmm2, dword [ebx + Ball_speed + v2_x]
+        movss xmm2, dword [ebx + Ball.speed + v2_x]
         xorps xmm2, [g_xmm_sign32]
-        movss dword [ebx + Ball_speed + v2_x], xmm2     ; speed.x = -speed.x
+        movss dword [ebx + Ball.speed + v2_x], xmm2     ; speed.x = -speed.x
 .right_ok:
         ucomiss xmm1, xmm3      ; ball->y < top ?
         jnb .top_ok
         movss xmm1, xmm3
-        movss xmm2, dword [ebx + Ball_speed + v2_y]
+        movss xmm2, dword [ebx + Ball.speed + v2_y]
         xorps xmm2, [g_xmm_sign32]
-        movss dword [ebx + Ball_speed + v2_y], xmm2     ; speed.y = -speed.y
+        movss dword [ebx + Ball.speed + v2_y], xmm2     ; speed.y = -speed.y
 .top_ok:
         ucomiss xmm1, xmm5      ; ball->y > bottom ?
         jna .bottom_ok
         ; TODO: destroy ball, check buff
         movss xmm1, xmm5
-        movss xmm2, dword [ebx + Ball_speed + v2_y]
+        movss xmm2, dword [ebx + Ball.speed + v2_y]
         xorps xmm2, [g_xmm_sign32]
-        movss dword [ebx + Ball_speed + v2_y], xmm2     ; speed.y = -speed.y
+        movss dword [ebx + Ball.speed + v2_y], xmm2     ; speed.y = -speed.y
 .bottom_ok:
 
         ; Collision with the bat
@@ -436,24 +438,24 @@ update_balls:
         ; xmm6 - top
         ; xmm7 - middle
 
-        cvtsi2ss xmm3, [g_bat + Bat_left]
-        subss xmm3, [ebx + Ball_radius]
+        cvtsi2ss xmm3, [g_bat + Bat.left]
+        subss xmm3, [ebx + Ball.radius]
         addss xmm3, [const_bat_margin]
 
-        cvtsi2ss xmm4, [g_bat + Bat_left]
-        cvtsi2ss xmm2, [g_bat + Bat_width]
+        cvtsi2ss xmm4, [g_bat + Bat.left]
+        cvtsi2ss xmm2, [g_bat + Bat.width]
         addss xmm4, xmm2
-        addss xmm4, [ebx + Ball_radius]
+        addss xmm4, [ebx + Ball.radius]
         subss xmm4, [const_bat_margin]
 
         cvtsi2ss xmm5, [g_height]
-        cvtsi2ss xmm2, [g_bat + Bat_bottom]
+        cvtsi2ss xmm2, [g_bat + Bat.bottom]
         subss xmm5, xmm2
 
         movss xmm6, xmm5
-        cvtsi2ss xmm2, [g_bat + Bat_height]
+        cvtsi2ss xmm2, [g_bat + Bat.height]
         subss xmm6, xmm2
-        subss xmm6, [ebx + Ball_radius]
+        subss xmm6, [ebx + Ball.radius]
 
         movss xmm7, xmm3
         addss xmm7, xmm4
@@ -470,9 +472,9 @@ update_balls:
 
         ; Collision!
         movss xmm1, xmm6                ; ball->y = top
-        movss xmm2, dword [ebx + Ball_speed + v2_y]
+        movss xmm2, dword [ebx + Ball.speed + v2_y]
         xorps xmm2, [g_xmm_sign32]
-        movss dword [ebx + Ball_speed + v2_y], xmm2     ; speed.y = -speed.y
+        movss dword [ebx + Ball.speed + v2_y], xmm2     ; speed.y = -speed.y
 
         ; top and bottom no longer needed, so xmm5 and xmm6 are free
 
@@ -514,7 +516,7 @@ update_balls:
 
 .new_speed:
         NORMALIZE [new_direction]
-        LENGTH [ebx + Ball_speed]       ; result in ST0
+        LENGTH [ebx + Ball.speed]       ; result in ST0
         sub esp, 4
         fstp dword [esp]
         mov eax, [esp]
@@ -523,18 +525,20 @@ update_balls:
 
         ; Set new speed
         mov eax, [new_direction + v2_x]
-        mov [ebx + Ball_speed + v2_x], eax
+        mov [ebx + Ball.speed + v2_x], eax
         mov eax, [new_direction + v2_y]
-        mov [ebx + Ball_speed + v2_y], eax
+        mov [ebx + Ball.speed + v2_y], eax
 
 .no_bat_collision:
 
         ; Apply x and y
-        movss [ebx + Ball_x], xmm0
-        movss [ebx + Ball_y], xmm1
+        movss [ebx + Ball.x], xmm0
+        movss [ebx + Ball.y], xmm1
 
         ; Collision with the bricks
-
+        push ebx
+        call collide_with_bricks
+        add esp, 4
 
 .draw_and_next:
         ; Redraw ball
@@ -544,7 +548,7 @@ update_balls:
         add esp, 8
 
 .next_ball:
-        add ebx, Ball__SIZE
+        add ebx, Ball_size
         inc ecx
         cmp ecx, MAX_BALLS
         jl .for_each_ball
@@ -561,13 +565,24 @@ collide_with_bricks:
         %push
         %stacksize flat
         %assign %$localsize 0
-        %local brick_width:dword, brick_x:dword, brick_y:dword
+        %local brick_rect:oword, left:dword, right:dword, top:dword, bottom:dword
         push ebp
         mov ebp, esp
-        sub esp, 12
+        sub esp, 24
         pusha
 
+        ; Brute force - check every brick
+        mov ecx, 0
+.for_bricks:
+        cmp byte [g_bricks + ecx], Brick_Empty
+        je .next_brick
 
+
+.next_brick:
+        inc ecx
+        cmp ecx, BRICKS_TOTAL
+        jl .for_bricks
+.break:
 
         popa
         leave
@@ -577,47 +592,46 @@ collide_with_bricks:
 
 ; ========================================================
 ; draw_bricks()
-segment .data
-const_bricks_per_row            dd      BRICKS_PER_ROW
-const_brick_height              dd      20
-segment .text
 draw_bricks:
         %push
         %stacksize flat
         %assign %$localsize 0
-        %local brick_width:dword, brick_x:dword, brick_y:dword
+        %local brick_rect:oword
         push ebp
         mov ebp, esp
         sub esp, 12
         pusha
 
-        ; Get brick width
-        mov eax, [g_width]
-        sub eax, WALL_SIZE
-        sub eax, WALL_SIZE
-        mov edx, 0
-        idiv dword [const_bricks_per_row]
-        mov [brick_width], eax
+        ; ; Get brick width
+        ; mov eax, [g_width]
+        ; sub eax, WALL_SIZE
+        ; sub eax, WALL_SIZE
+        ; mov edx, 0
+        ; idiv dword [const_bricks_per_row]
+        ; mov [brick_width], eax
 
         mov ecx, 0
 .draw_brick:
         cmp byte [g_bricks + ecx], Brick_Empty
         je .next_brick
 
-        ; Get brick x,y
-        mov edx, 0
-        mov eax, ecx
-        idiv dword [const_bricks_per_row]
-        mov dword [brick_x], edx
-        mov dword [brick_y], eax
-        mov eax, [brick_width]
-        imul eax, [brick_x]
-        add eax, WALL_SIZE
-        mov [brick_x], eax      ; store final brick_x
-        mov eax, [const_brick_height]
-        imul eax, [brick_y]
-        add eax, WALL_SIZE
-        mov [brick_y], eax      ; store final brick_y
+        ; Get brick rect
+        lea eax, [brick_rect]
+
+        ; ; Get brick x,y
+        ; mov edx, 0
+        ; mov eax, ecx
+        ; idiv dword [const_bricks_per_row]
+        ; mov dword [brick_x], edx
+        ; mov dword [brick_y], eax
+        ; mov eax, [brick_width]
+        ; imul eax, [brick_x]
+        ; add eax, WALL_SIZE
+        ; mov [brick_x], eax      ; store final brick_x
+        ; mov eax, [const_brick_height]
+        ; imul eax, [brick_y]
+        ; add eax, WALL_SIZE
+        ; mov [brick_y], eax      ; store final brick_y
 
         ; Get color
         mov eax, 0x00BBBBBB
@@ -630,14 +644,14 @@ draw_bricks:
         mov eax, 0x00AA8888
 .not_unbreakable:
 
-        ; Draw
-        push eax
-        push dword [const_brick_height]
-        push dword [brick_width]
-        push dword [brick_y]
-        push dword [brick_x]
-        call draw_rect
-        add esp, 20
+        ; ; Draw
+        ; push eax
+        ; push dword [const_brick_height]
+        ; push dword [brick_width]
+        ; push dword [brick_y]
+        ; push dword [brick_x]
+        ; call draw_rect
+        ; add esp, 20
 
 .next_brick:
         inc ecx

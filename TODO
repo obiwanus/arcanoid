@@ -8,13 +8,16 @@ ASM:
 optional:
 - Range check for draw circle
 - Use SIMD to draw
-- Try to use nasm structs to avoid explicit state vars
 
 C:
 
 
 ========================================================================
 DONE:
+
+22 Sep 2017
+- Use NASM structs
+
 20 Sep 2017
 - Draw level
 

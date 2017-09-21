@@ -202,13 +202,13 @@ draw_bat:
         pusha
 
         push dword [color]
-        push dword [g_bat + Bat_height]
-        push dword [g_bat + Bat_width]
+        push dword [g_bat + Bat.height]
+        push dword [g_bat + Bat.width]
         mov eax, [g_height]
-        sub eax, [g_bat + Bat_bottom]
-        sub eax, [g_bat + Bat_height]
+        sub eax, [g_bat + Bat.bottom]
+        sub eax, [g_bat + Bat.height]
         push eax
-        push dword [g_bat + Bat_left]
+        push dword [g_bat + Bat.left]
         call draw_rect
         add esp, 20
 
@@ -230,9 +230,9 @@ draw_ball:
 
         mov ebx, [ball_ptr]     ; get the ptr
         push dword [color]
-        push dword [ebx + Ball_radius]
-        push dword [ebx + Ball_y]
-        push dword [ebx + Ball_x]
+        push dword [ebx + Ball.radius]
+        push dword [ebx + Ball.y]
+        push dword [ebx + Ball.x]
         call draw_circle
         add esp, 16
 
