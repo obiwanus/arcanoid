@@ -563,6 +563,7 @@ update_balls:
 collide_with_bricks:
         %push
         %stacksize flat
+        %arg ball:dword
         %assign %$localsize 0
         %local brick_rect:oword, left:dword, right:dword, top:dword, bottom:dword
         push ebp
@@ -570,11 +571,59 @@ collide_with_bricks:
         sub esp, 24
         pusha
 
+        ; Get pointers - must not be modified
+        lea ebx, [brick_rect]
+        mov edx, [ball]
+
         ; Brute force - check every brick
         mov ecx, 0
 .for_bricks:
         cmp byte [g_bricks + ecx], Brick_Empty
         je .next_brick
+
+        ; Get brick rect
+        push ebx
+        push ecx
+        call get_brick_rect
+        add esp, 8
+
+        ; Get collision rect (in float)
+        cvtsi2ss xmm0, [ebx + Rect.left]        ; left
+        subss xmm0, [edx + Ball.radius]
+        cvtsi2ss xmm1, [ebx + Rect.left]        ; right
+        cvtsi2ss xmm2, [ebx + Rect.width]
+        addss xmm1, xmm2
+        addss xmm1, [edx + Ball.radius]
+        cvtsi2ss xmm2, [ebx + Rect.top]         ; top
+        subss xmm2, [edx + Ball.radius]
+        cvtsi2ss xmm3, [ebx + Rect.top]         ; bottom
+        cvtsi2ss xmm4, [ebx + Rect.height]
+        addss xmm3, xmm4
+        addss xmm3, [edx + Ball.radius]
+
+        ; Check collision
+        ucomiss xmm0, [edx + Ball.x]
+        ja .next_brick
+        ucomiss xmm1, [edx + Ball.x]
+        jb .next_brick
+        ucomiss xmm2, [edx + Ball.y]
+        ja .next_brick
+        ucomiss xmm3, [edx + Ball.y]
+        jb .next_brick
+
+        ; Hit brick!
+        dec byte [g_bricks + ecx]
+        cmp byte [g_bricks + ecx], 0
+        jne .end_hit_brick
+        ; Erase
+        push dword BG_COLOR
+        push dword [ebx + Rect.height]
+        push dword [ebx + Rect.width]
+        push dword [ebx + Rect.top]
+        push dword [ebx + Rect.left]
+        call draw_rect
+        add esp, 20
+.end_hit_brick:
 
 
 .next_brick:
