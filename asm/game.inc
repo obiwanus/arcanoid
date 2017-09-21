@@ -48,8 +48,10 @@ endstruc
 
 ; === V2
 
-%define v2_x    0
-%define v2_y    4
+struc v2
+        .x      resd    1
+        .y      resd    1
+endstruc
 
 ; === Buffs
 
@@ -114,13 +116,13 @@ endstruc
         call v2_length                  ; result in st0
         add esp, 4
 
-        fld dword [eax + v2_x]
+        fld dword [eax + v2.x]
         fdiv st1
-        fstp dword [eax + v2_x]         ; vector->x /= len
+        fstp dword [eax + v2.x]         ; vector->x /= len
 
-        fld dword [eax + v2_y]
+        fld dword [eax + v2.y]
         fdiv st1
-        fstp dword [eax + v2_y]         ; vector->x /= len
+        fstp dword [eax + v2.y]         ; vector->x /= len
 
         ffree st0
         pop eax
@@ -136,13 +138,13 @@ endstruc
 
         lea eax, %1
 
-        fld dword [eax + v2_x]
+        fld dword [eax + v2.x]
         fmul st1
-        fstp dword [eax + v2_x]
+        fstp dword [eax + v2.x]
 
-        fld dword [eax + v2_y]
+        fld dword [eax + v2.y]
         fmul st1
-        fstp dword [eax + v2_y]
+        fstp dword [eax + v2.y]
 
         ffree st0
         pop eax

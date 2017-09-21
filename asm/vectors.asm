@@ -13,9 +13,9 @@ v2_length:
         pusha
 
         mov eax, [ebp + 8]              ; load pointer to v2
-        fld dword [eax + v2_y]
+        fld dword [eax + v2.y]
         fmul st0
-        fld dword [eax + v2_x]
+        fld dword [eax + v2.x]
         fmul st0
         faddp
         fsqrt
@@ -59,23 +59,23 @@ v2_lerp:
         mov ecx, [b]
         mov edx, [result]
 
-        fld dword [ecx + v2_x]
-        fld dword [ebx + v2_x]
+        fld dword [ecx + v2.x]
+        fld dword [ebx + v2.x]
         fsubp st1               ; st0 = b.x - a.x
         fld dword [t]
         fmulp st1               ; st0 = t * (b.x - a.x)
-        fld dword [ebx + v2_x]
+        fld dword [ebx + v2.x]
         faddp st1               ; st0 = a.x + t * (b.x - a.x)
-        fstp dword [edx + v2_x]
+        fstp dword [edx + v2.x]
 
-        fld dword [ecx + v2_y]
-        fld dword [ebx + v2_y]
+        fld dword [ecx + v2.y]
+        fld dword [ebx + v2.y]
         fsubp st1               ; st0 = b.y - a.y
         fld dword [t]
         fmulp st1               ; st0 = t * (b.y - a.y)
-        fld dword [ebx + v2_y]
+        fld dword [ebx + v2.y]
         faddp st1               ; st0 = a.y + t * (b.y - a.y)
-        fstp dword [edx + v2_y]
+        fstp dword [edx + v2.y]
 
         popa
         leave

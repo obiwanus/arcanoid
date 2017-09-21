@@ -4,6 +4,7 @@
 ; --------------------------------------------------------
 segment .data align=16
 g_xmm_sign32            dd      0x80000000, 0x80000000, 0x80000000, 0x80000000  ; must be aligned
+g_xmm_abs32             dd      0x7FFFFFFF, 0x7FFFFFFF, 0x7FFFFFFF, 0x7FFFFFFF  ; must be aligned
 g_level_initialised     dd      0
 g_current_level         dd      0
 g_wall_size             dd      __float32__(5.0)
@@ -133,8 +134,8 @@ init_level:
         mov byte  [edx + Ball.active], FALSE
         mov byte  [edx + Ball.attached], FALSE
         mov dword [edx + Ball.radius], __float32__(8.0)
-        mov dword [edx + Ball.speed + v2_x], __float32__(1.0)
-        mov dword [edx + Ball.speed + v2_y], __float32__(-1.0)
+        mov dword [edx + Ball.speed + v2.x], __float32__(1.0)
+        mov dword [edx + Ball.speed + v2.y], __float32__(-1.0)
         NORMALIZE [edx + Ball.speed]
         SCALE [edx + Ball.speed], START_BALL_SPEED
         add edx, Ball_size
@@ -377,10 +378,10 @@ update_balls:
 
         ; Move ball
         movss xmm0, [ebx + Ball.x]
-        addss xmm0, [ebx + Ball.speed + v2_x]
+        addss xmm0, [ebx + Ball.speed + v2.x]
 
         movss xmm1, [ebx + Ball.y]
-        addss xmm1, [ebx + Ball.speed + v2_y]
+        addss xmm1, [ebx + Ball.speed + v2.y]
 
         ; Get screen borders
         ; xmm3 - left, top
@@ -403,31 +404,31 @@ update_balls:
         ucomiss xmm0, xmm3      ; ball->x < left ?
         jnb .left_ok
         movss xmm0, xmm3
-        movss xmm2, dword [ebx + Ball.speed + v2_x]
+        movss xmm2, dword [ebx + Ball.speed + v2.x]
         xorps xmm2, [g_xmm_sign32]
-        movss dword [ebx + Ball.speed + v2_x], xmm2     ; speed.x = -speed.x
+        movss dword [ebx + Ball.speed + v2.x], xmm2     ; speed.x = -speed.x
 .left_ok:
         ucomiss xmm0, xmm4      ; ball->x > right ?
         jna .right_ok
         movss xmm0, xmm4
-        movss xmm2, dword [ebx + Ball.speed + v2_x]
+        movss xmm2, dword [ebx + Ball.speed + v2.x]
         xorps xmm2, [g_xmm_sign32]
-        movss dword [ebx + Ball.speed + v2_x], xmm2     ; speed.x = -speed.x
+        movss dword [ebx + Ball.speed + v2.x], xmm2     ; speed.x = -speed.x
 .right_ok:
         ucomiss xmm1, xmm3      ; ball->y < top ?
         jnb .top_ok
         movss xmm1, xmm3
-        movss xmm2, dword [ebx + Ball.speed + v2_y]
+        movss xmm2, dword [ebx + Ball.speed + v2.y]
         xorps xmm2, [g_xmm_sign32]
-        movss dword [ebx + Ball.speed + v2_y], xmm2     ; speed.y = -speed.y
+        movss dword [ebx + Ball.speed + v2.y], xmm2     ; speed.y = -speed.y
 .top_ok:
         ucomiss xmm1, xmm5      ; ball->y > bottom ?
         jna .bottom_ok
         ; TODO: destroy ball, check buff
         movss xmm1, xmm5
-        movss xmm2, dword [ebx + Ball.speed + v2_y]
+        movss xmm2, dword [ebx + Ball.speed + v2.y]
         xorps xmm2, [g_xmm_sign32]
-        movss dword [ebx + Ball.speed + v2_y], xmm2     ; speed.y = -speed.y
+        movss dword [ebx + Ball.speed + v2.y], xmm2     ; speed.y = -speed.y
 .bottom_ok:
 
         ; Collision with the bat
@@ -471,9 +472,9 @@ update_balls:
 
         ; Collision!
         movss xmm1, xmm6                ; ball->y = top
-        movss xmm2, dword [ebx + Ball.speed + v2_y]
+        movss xmm2, dword [ebx + Ball.speed + v2.y]
         xorps xmm2, [g_xmm_sign32]
-        movss dword [ebx + Ball.speed + v2_y], xmm2     ; speed.y = -speed.y
+        movss dword [ebx + Ball.speed + v2.y], xmm2     ; speed.y = -speed.y
 
         ; top and bottom no longer needed, so xmm5 and xmm6 are free
 
@@ -523,10 +524,10 @@ update_balls:
         SCALE [new_direction], eax
 
         ; Set new speed
-        mov eax, [new_direction + v2_x]
-        mov [ebx + Ball.speed + v2_x], eax
-        mov eax, [new_direction + v2_y]
-        mov [ebx + Ball.speed + v2_y], eax
+        mov eax, [new_direction + v2.x]
+        mov [ebx + Ball.speed + v2.x], eax
+        mov eax, [new_direction + v2.y]
+        mov [ebx + Ball.speed + v2.y], eax
 
 .no_bat_collision:
 
@@ -625,6 +626,69 @@ collide_with_bricks:
         add esp, 20
 .end_hit_brick:
 
+        ; Bounce (TODO: powerball)
+        subss xmm0, [edx + Ball.x]      ; ldist
+        andps xmm0, [g_xmm_abs32]
+        subss xmm1, [edx + Ball.x]      ; rdist
+        andps xmm1, [g_xmm_abs32]
+        subss xmm2, [edx + Ball.y]      ; tdist
+        andps xmm2, [g_xmm_abs32]
+        subss xmm3, [edx + Ball.y]      ; bdist
+        andps xmm3, [g_xmm_abs32]
+
+        movss xmm4, [edx + Ball.speed + v2.x]   ; abs ball speed x
+        andps xmm4, [g_xmm_abs32]
+        movss xmm5, [edx + Ball.speed + v2.y]   ; abs ball speed y
+        andps xmm5, [g_xmm_abs32]
+
+        ucomiss xmm0, xmm1      ; ldist <= rdist
+        ja .not_left
+        ucomiss xmm0, xmm2      ; ldist <= tdist
+        ja .not_left
+        ucomiss xmm0, xmm3      ; ldist <= bdist
+        ja .not_left
+        ; Bounce left
+        xorps xmm4, [g_xmm_sign32]
+        movss [edx + Ball.speed + v2.x], xmm4   ; speed.x = -abs(speed.x)
+        jmp .bounce_end
+.not_left:
+
+        ucomiss xmm1, xmm0      ; rdist <= ldist
+        ja .not_right
+        ucomiss xmm1, xmm2      ; rdist <= tdist
+        ja .not_right
+        ucomiss xmm1, xmm3      ; rdist <= bdist
+        ja .not_right
+        ; Bounce right
+        movss [edx + Ball.speed + v2.x], xmm4   ; speed.x = abs(speed.x)
+        jmp .bounce_end
+.not_right:
+
+        ucomiss xmm2, xmm1      ; tdist <= rdist
+        ja .not_top
+        ucomiss xmm2, xmm0      ; tdist <= ldist
+        ja .not_top
+        ucomiss xmm2, xmm3      ; tdist <= bdist
+        ja .not_top
+        ; Bounce top
+        xorps xmm5, [g_xmm_sign32]
+        movss [edx + Ball.speed + v2.y], xmm5   ; speed.y = -abs(speed.y)
+        jmp .bounce_end
+.not_top:
+
+        ucomiss xmm3, xmm0      ; bdist <= ldist
+        ja .not_bottom
+        ucomiss xmm3, xmm1      ; bdist <= rdist
+        ja .not_bottom
+        ucomiss xmm3, xmm2      ; bdist <= tdist
+        ja .not_bottom
+        ; Bounce bottom
+        movss [edx + Ball.speed + v2.y], xmm5   ; speed.y = -abs(speed.y)
+        jmp .bounce_end
+.not_bottom:
+
+.bounce_end:
+        jmp .break
 
 .next_brick:
         inc ecx
