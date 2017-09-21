@@ -1,7 +1,6 @@
 
 ASM:
 
-- Be able to complete level
 - Drop buffs
 - Catch and apply buffs
 
@@ -16,6 +15,7 @@ C:
 DONE:
 
 22 Sep 2017
+- Be able to complete level
 - Collision with bricks
 - Use NASM structs
 

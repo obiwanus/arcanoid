@@ -83,9 +83,11 @@ update_and_render:
         call init_level
 .level_is_ok:
 
+        ; Update
         call update_bat
         call update_balls
         call draw_bricks
+        call update_buffs
 
         call check_level_complete
         cmp eax, TRUE
@@ -830,7 +832,7 @@ check_level_complete:
 
         mov dword [complete], FALSE
 
-        mov ecx, BRICKS_TOTAL
+        mov ecx, BRICKS_TOTAL - 1
 .for_bricks:
         cmp byte [g_bricks + ecx], Brick_Empty
         jne .return     ; return FALSE
@@ -840,6 +842,37 @@ check_level_complete:
 .return:
         popa
         mov eax, [complete]
+        leave
+        ret
+        %pop
+
+
+; ========================================================
+; update_buffs()
+update_buffs:
+        %push
+        %stacksize flat
+        ; %assign %$localsize 0
+        ; %local complete:dword
+        push ebp
+        mov ebp, esp
+        sub esp, 4
+        pusha
+
+        ; Decrement all buffs
+        mov ecx, Buff_Type__COUNT - 1
+.decrement_buffs:
+        cmp dword [g_active_buffs + ecx], 0
+        jna .decrement_next
+        dec dword [g_active_buffs + ecx]
+.decrement_next:
+        loop .decrement_buffs
+
+        ; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        TODO: create buffs and update them
+        ; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+        popa
         leave
         ret
         %pop
