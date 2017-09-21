@@ -12,6 +12,7 @@
 %xdefine BRICKS_PER_ROW           11
 %xdefine BRICKS_PER_COL           20
 %define BRICKS_TOTAL             (BRICKS_PER_ROW * BRICKS_PER_COL)
+%define BRICK_HEIGHT             20
 %define DEFAULT_BAT_WIDTH        70
 %define BAT_MOVE_STEP            6
 %xdefine START_BALL_SPEED        __float32__(8.0)
@@ -85,15 +86,6 @@ struc Ball
         .y              resd    1
         .speed          resd    2
 endstruc
-
-; %define Ball_active             0
-; %define Ball_attached           1
-; %define Ball_attached_x         4
-; %define Ball_radius             8
-; %define Ball_x                  12
-; %define Ball_y                  16
-; %define Ball_speed              20      ; v2
-; %define Ball__SIZE              28
 
 ; === Bricks
 

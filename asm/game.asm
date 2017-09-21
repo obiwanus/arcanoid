@@ -8,7 +8,6 @@ g_level_initialised     dd      0
 g_current_level         dd      0
 g_wall_size             dd      __float32__(5.0)
 const_bricks_per_row    dd      BRICKS_PER_ROW
-const_brick_height      dd      20
 ; --------------------------------------------------------
 segment .bss
 
@@ -591,6 +590,53 @@ collide_with_bricks:
 
 
 ; ========================================================
+; get_brick_rect(int num, Rect *brick_rect)
+get_brick_rect:
+        %push
+        %stacksize flat
+        %arg num:dword, brick_rect:dword
+        %assign %$localsize 0
+        %local x:dword, y:dword
+        push ebp
+        mov ebp, esp
+        sub esp, 12
+        pusha
+
+        ; Get pointer to result
+        mov ebx, [brick_rect]
+
+        ; Get brick width
+        mov eax, [g_width]
+        sub eax, WALL_SIZE
+        sub eax, WALL_SIZE
+        mov edx, 0
+        idiv dword [const_bricks_per_row]
+        mov [ebx + Rect.width], eax     ; Store width
+
+        mov dword [ebx + Rect.height], BRICK_HEIGHT   ; Store height
+
+        ; Get brick x,y
+        mov edx, 0
+        mov eax, [num]
+        idiv dword [const_bricks_per_row]
+        mov dword [x], edx
+        mov dword [y], eax
+        mov eax, [ebx + Rect.width]
+        imul eax, [x]
+        add eax, WALL_SIZE
+        mov [ebx + Rect.left], eax      ; store final brick x
+        mov eax, BRICK_HEIGHT
+        imul eax, [y]
+        add eax, WALL_SIZE
+        mov [ebx + Rect.top], eax       ; store final brick y
+
+        popa
+        leave
+        ret
+        %pop
+
+
+; ========================================================
 ; draw_bricks()
 draw_bricks:
         %push
@@ -602,14 +648,6 @@ draw_bricks:
         sub esp, 12
         pusha
 
-        ; ; Get brick width
-        ; mov eax, [g_width]
-        ; sub eax, WALL_SIZE
-        ; sub eax, WALL_SIZE
-        ; mov edx, 0
-        ; idiv dword [const_bricks_per_row]
-        ; mov [brick_width], eax
-
         mov ecx, 0
 .draw_brick:
         cmp byte [g_bricks + ecx], Brick_Empty
@@ -617,21 +655,10 @@ draw_bricks:
 
         ; Get brick rect
         lea eax, [brick_rect]
-
-        ; ; Get brick x,y
-        ; mov edx, 0
-        ; mov eax, ecx
-        ; idiv dword [const_bricks_per_row]
-        ; mov dword [brick_x], edx
-        ; mov dword [brick_y], eax
-        ; mov eax, [brick_width]
-        ; imul eax, [brick_x]
-        ; add eax, WALL_SIZE
-        ; mov [brick_x], eax      ; store final brick_x
-        ; mov eax, [const_brick_height]
-        ; imul eax, [brick_y]
-        ; add eax, WALL_SIZE
-        ; mov [brick_y], eax      ; store final brick_y
+        push eax        ; &brick_rect
+        push ecx        ; num
+        call get_brick_rect
+        add esp, 8
 
         ; Get color
         mov eax, 0x00BBBBBB
@@ -644,14 +671,15 @@ draw_bricks:
         mov eax, 0x00AA8888
 .not_unbreakable:
 
-        ; ; Draw
-        ; push eax
-        ; push dword [const_brick_height]
-        ; push dword [brick_width]
-        ; push dword [brick_y]
-        ; push dword [brick_x]
-        ; call draw_rect
-        ; add esp, 20
+        ; Draw
+        lea ebx, [brick_rect]
+        push eax
+        push dword [ebx + Rect.height]
+        push dword [ebx + Rect.width]
+        push dword [ebx + Rect.top]
+        push dword [ebx + Rect.left]
+        call draw_rect
+        add esp, 20
 
 .next_brick:
         inc ecx
