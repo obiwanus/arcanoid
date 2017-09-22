@@ -10,6 +10,7 @@ Project goals:
 ## Prerequisites
 - Install clang
 - Install libc6-dev-i386
+- Install libx11-dev:i386 libx11-dev
 - Install nasm
 
 ## Compilation
