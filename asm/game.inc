@@ -1,7 +1,6 @@
 %ifndef __GAME_INC__
 %define __GAME_INC__
 
-
 %define BG_COLOR                 0x00000000
 %define WALL_SIZE                5
 %define MAX_BALLS                10
@@ -14,7 +13,7 @@
 %define BRICKS_TOTAL             (BRICKS_PER_ROW * BRICKS_PER_COL)
 %define BRICK_HEIGHT             20
 %define DEFAULT_BAT_WIDTH        70
-%define BAT_MOVE_STEP            6
+%define BAT_MOVE_STEP            9
 %xdefine START_BALL_SPEED        __float32__(8.0)
 %xdefine MAX_BALL_SPEED          8
 %define BULLET_COOLDOWN          20
@@ -64,6 +63,13 @@ endstruc
 %define Buff_Gun                6
 %define Buff_BottomWall         7
 %define Buff_Type__COUNT        8
+
+struc Buff
+        .type           resd    1
+        .position       resq    1
+endstruc
+
+%define Buff__SIZE             16       ; aligned
 
 ; === Bat
 

@@ -24,6 +24,11 @@ u64 LinuxGetWallClock() {
   return result;
 }
 
+void fatal_error() {
+  printf("Fatal error\n");
+  exit(1);
+}
+
 void CreateLevels(Level *levels) {
   int level = 0;
   // levels[level++].layout =

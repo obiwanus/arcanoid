@@ -34,7 +34,7 @@ g_active_buffs          resd    Buff_Type__COUNT
 g_levels                resd    1
 g_balls                 resb    MAX_BALLS * Ball_size
 g_bricks                resb    BRICKS_TOTAL
-g_buffs                 resd    3 * MAX_BUFFS
+g_buffs                 resb    MAX_BUFFS * Buff__SIZE
 g_bullets               resd    2 * MAX_BULLETS
 g_bat                   resd    6
 
@@ -43,6 +43,7 @@ segment .text
 global update_and_render, attach_to_bat
 extern draw_rect, draw_pixel, draw_circle, draw_bat, draw_ball
 extern v2_length, v2_lerp
+extern rand, fatal_error
 
 ; ========================================================
 ; update_and_render(
@@ -226,14 +227,22 @@ init_level:
         ;   state->bullets[i] = V2(-1, -1);  // negative means inactive
         ; }
 
-        ; // Clean up all buffs
-        ; state->falling_buffs = 0;
-        ; for (int i = 0; i < MAX_BUFFS; ++i) {
-        ;   state->buffs[i].type = Buff_Inactive;
-        ; }
-        ; for (int i = 0; i < Buff_Type__COUNT; ++i) {
-        ;   state->active_buffs[i] = 0;
-        ; }
+        ; Clean up all buffs
+        mov dword [g_falling_buffs], 0
+        mov ecx, MAX_BUFFS
+        lea ebx, [g_buffs]
+.clean_up_buffs:
+        mov dword [ebx + Buff.type], Buff_Inactive
+        add ebx, Buff__SIZE
+        loop .clean_up_buffs
+
+        ; Remove active buffs
+        mov ecx, Buff_Type__COUNT
+        lea ebx, [g_active_buffs]
+.remove_active_buffs:
+        mov dword [ebx], 0
+        add ebx, 4
+        loop .remove_active_buffs
 
         ; Mark as initialised
         mov dword [g_level_initialised], TRUE
@@ -626,7 +635,7 @@ collide_with_bricks:
         ; Hit brick!
         dec byte [g_bricks + ecx]
         cmp byte [g_bricks + ecx], 0
-        jne .end_hit_brick
+        jg .end_hit_brick
         ; Erase
         push dword BG_COLOR
         push dword [ebx + Rect.height]
@@ -636,8 +645,6 @@ collide_with_bricks:
         call draw_rect
         add esp, 20
 .end_hit_brick:
-
-        jmp .break
 
         ; Bounce (TODO: powerball)
         subss xmm0, [edx + Ball.x]      ; ldist
@@ -696,11 +703,18 @@ collide_with_bricks:
         ucomiss xmm3, xmm2      ; bdist <= tdist
         ja .not_bottom
         ; Bounce bottom
-        movss [edx + Ball.speed + v2.y], xmm5   ; speed.y = -abs(speed.y)
+        movss [edx + Ball.speed + v2.y], xmm5   ; speed.y = abs(speed.y)
         jmp .bounce_end
 .not_bottom:
 
 .bounce_end:
+
+        push dword [ebx + Rect.top]
+        push dword [ebx + Rect.left]
+        call maybe_drop_buff
+        add esp, 8
+
+        ; Don't collide with other bricks
         jmp .break
 
 .next_brick:
@@ -714,6 +728,66 @@ collide_with_bricks:
         ret
         %pop
 
+
+; ========================================================
+; maybe_drop_buff(float x, float y)
+segment .data
+const_100               dd      100
+const_buff_chance       dd      15
+const_buff_type_count   dd      Buff_Type__COUNT-1
+
+segment .text
+maybe_drop_buff:
+        %push
+        %stacksize flat
+        %arg x:dword, y:dword
+        push ebp
+        mov ebp, esp
+        pusha
+
+        ; Check your chance
+        call rand                       ; NOTE: destroys ecx!
+        mov edx, 0
+        idiv dword [const_100]          ; edx:eax = rand() / 100
+        cmp edx, dword [const_buff_chance]
+        jge .end_drop_buffs
+        cmp dword [g_falling_buffs], MAX_BUFFS
+        jge .end_drop_buffs
+
+        ; Drop a buff
+        inc dword [g_falling_buffs]
+        mov ecx, 0
+        mov ebx, g_buffs
+.find_next_available_buff:
+        cmp dword [ebx + Buff.type], Buff_Inactive
+        je .found_buff
+        add ebx, Buff__SIZE
+        inc ecx
+        cmp ecx, MAX_BUFFS
+        jl .find_next_available_buff
+.found_buff:
+
+        ; assert ecx < MAX_BUFFS
+        cmp ecx, MAX_BUFFS
+        je fatal_error
+
+        ; Init buff
+        call rand
+        mov edx, 0
+        idiv dword [const_buff_type_count]
+        inc edx
+        mov dword [ebx + Buff.type], edx                   ; set random type
+        mov eax, [x]
+        mov dword [ebx + Buff.position + v2.x], eax        ; set position
+        mov eax, [y]
+        mov dword [ebx + Buff.position + v2.y], eax
+
+.end_drop_buffs:
+
+        popa
+        leave
+        ret
+        %pop
 
 ; ========================================================
 ; get_brick_rect(int num, Rect *brick_rect)
@@ -812,6 +886,8 @@ draw_bricks:
         cmp ecx, BRICKS_TOTAL
         jl .draw_brick
 
+        ; lea ebx, [g_bricks + ecx]
+
         popa
         leave
         ret
@@ -832,9 +908,9 @@ check_level_complete:
 
         mov dword [complete], FALSE
 
-        mov ecx, BRICKS_TOTAL - 1
+        mov ecx, BRICKS_TOTAL
 .for_bricks:
-        cmp byte [g_bricks + ecx], Brick_Empty
+        cmp byte [g_bricks + ecx - 1], Brick_Empty
         jne .return     ; return FALSE
         loop .for_bricks
 
@@ -860,16 +936,16 @@ update_buffs:
         pusha
 
         ; Decrement all buffs
-        mov ecx, Buff_Type__COUNT - 1
+        mov ecx, Buff_Type__COUNT
 .decrement_buffs:
-        cmp dword [g_active_buffs + ecx], 0
+        cmp dword [g_active_buffs + 4 * ecx - 4], 0
         jna .decrement_next
-        dec dword [g_active_buffs + ecx]
+        dec dword [g_active_buffs + 4 * ecx - 4]
 .decrement_next:
         loop .decrement_buffs
 
         ; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        TODO: create buffs and update them
+        ; TODO: create buffs and update them
         ; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         popa
