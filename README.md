@@ -7,6 +7,9 @@ Project goals:
 - Support buffs and debuffs
 - Actually finish the game
 
+## Video preview of the resulting game
+[![Arcanoid preview](https://img.youtube.com/vi/gWymbmSJbuE/0.jpg)](https://www.youtube.com/watch?v=gWymbmSJbuE)
+
 ## Prerequisites
 - Install clang
 - Install libc6-dev-i386
