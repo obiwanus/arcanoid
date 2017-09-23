@@ -1,18 +1,18 @@
 
 ASM:
 
-- Drop buffs
 - Catch and apply buffs
 
 optional:
 - Range check for draw circle
 - Use SIMD to draw
 
-C:
-
 
 ========================================================================
 DONE:
+
+24 Sep 2017
+- Drop buffs
 
 23 Sep 2017
 - Init buffs, try to drop buffs

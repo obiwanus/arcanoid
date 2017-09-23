@@ -733,7 +733,7 @@ collide_with_bricks:
 ; maybe_drop_buff(float x, float y)
 segment .data
 const_100               dd      100
-const_buff_chance       dd      15
+const_buff_chance       dd      25
 const_buff_type_count   dd      Buff_Type__COUNT-1
 
 segment .text
@@ -886,8 +886,6 @@ draw_bricks:
         cmp ecx, BRICKS_TOTAL
         jl .draw_brick
 
-        ; lea ebx, [g_bricks + ecx]
-
         popa
         leave
         ret
@@ -925,6 +923,11 @@ check_level_complete:
 
 ; ========================================================
 ; update_buffs()
+segment .data
+const_buff_width        dd      40
+const_buff_height       dd      15
+
+segment .text
 update_buffs:
         %push
         %stacksize flat
@@ -944,9 +947,46 @@ update_buffs:
 .decrement_next:
         loop .decrement_buffs
 
-        ; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        ; TODO: create buffs and update them
-        ; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        mov ecx, 0
+        lea ebx, [g_buffs]
+.update_one:
+        cmp dword [ebx + Buff.type], Buff_Inactive
+        je .next_buff
+
+        ; Erase
+        push dword BG_COLOR
+        push dword [const_buff_height]
+        push dword [const_buff_width]
+        push dword [ebx + Buff.position + v2.y]
+        push dword [ebx + Buff.position + v2.x]
+        call draw_rect
+        add esp, 20
+
+        ; Move
+        add dword [ebx + Buff.position + v2.y], 2
+
+        ; Destroy if reaches bottom
+        mov eax, [g_height]
+        cmp dword [ebx + Buff.position + v2.y], eax     ; buff->y > screen_height?
+        jle .not_at_bottom
+        mov dword [ebx + Buff.type], Buff_Inactive
+        dec dword [g_falling_buffs]
+.not_at_bottom:
+
+        ; Redraw
+        push dword 0x00FFFFFF
+        push dword [const_buff_height]
+        push dword [const_buff_width]
+        push dword [ebx + Buff.position + v2.y]
+        push dword [ebx + Buff.position + v2.x]
+        call draw_rect
+        add esp, 20
+
+.next_buff:
+        add ebx, Buff__SIZE
+        inc ecx
+        cmp ecx, MAX_BUFFS
+        jl .update_one
 
         popa
         leave
