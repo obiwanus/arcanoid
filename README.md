@@ -8,6 +8,7 @@ Project goals:
 - Actually finish the game
 
 ## Video preview of the resulting game
+Yay programmer art!
 [![Arcanoid preview](https://img.youtube.com/vi/gWymbmSJbuE/0.jpg)](https://www.youtube.com/watch?v=gWymbmSJbuE)
 
 ## Prerequisites
